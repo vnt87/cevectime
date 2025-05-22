@@ -16,6 +16,7 @@ import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate, isDateDisab
 import { exportToCSV } from '@/lib/csv-utils';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
+import { ThemeToggleButton } from '@/components/theme-toggle-button'; // Added ThemeToggleButton
 
 export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
@@ -106,16 +107,7 @@ export default function HomePage() {
       <div className="px-4 md:px-8 pt-4 md:pt-8"> 
         <header className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
-          <div className="flex gap-2">
-            <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Log Timesheet
-            </Button>
-          </div>
+          <ThemeToggleButton /> {/* Moved ThemeToggleButton here */}
         </header>
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card>
@@ -148,6 +140,17 @@ export default function HomePage() {
               <p className="text-xs text-muted-foreground">past workdays</p>
             </CardContent>
           </Card>
+        </div>
+         {/* Moved buttons here */}
+        <div className="mb-6 flex flex-col sm:flex-row justify-end items-center gap-2">
+            <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Log Timesheet
+            </Button>
         </div>
       </div>
 
