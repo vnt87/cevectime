@@ -32,6 +32,7 @@ interface TimesheetFormProps {
   onSave: (newEntries: TimesheetEntry[]) => void;
   existingEntries: TimesheetEntry[];
   initialDate?: Date;
+  vietnamHolidays: string[]; // Added prop for holidays
 }
 
 const formSchema = z.object({
@@ -60,7 +61,7 @@ const formSchema = z.object({
 
 type TimesheetFormData = z.infer<typeof formSchema>;
 
-export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, initialDate }: TimesheetFormProps) {
+export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, initialDate, vietnamHolidays }: TimesheetFormProps) {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -83,8 +84,14 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
   useEffect(() => {
     if (isOpen) {
       let effectiveInitialDate = startOfDay(new Date());
-      if (initialDate) {
+      if (initialDate && !isDateDisabled(initialDate, vietnamHolidays)) { // Check if initialDate is not disabled
         effectiveInitialDate = startOfDay(initialDate);
+      } else if (initialDate && isDateDisabled(initialDate, vietnamHolidays)) {
+         // If initial date is disabled (e.g. holiday), don't set it, let user pick.
+         // Or, reset to a non-disabled default. For now, just don't pre-fill a disabled one.
+         effectiveInitialDate = startOfDay(new Date()); // Fallback to today or undefined
+         // Optionally, inform user initial selected date was a holiday
+         toast({ title: "Notice", description: "Selected date is a non-working day. Please pick a valid date.", variant: "default" });
       }
       
       form.reset({
@@ -101,7 +108,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
       });
       setDateRange({ from: effectiveInitialDate, to: effectiveInitialDate });
     }
-  }, [isOpen, initialDate, form]);
+  }, [isOpen, initialDate, form, vietnamHolidays, toast]);
 
 
   useEffect(() => {
@@ -150,10 +157,10 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
 
     const startDate = data.dateRange.from;
     const endDate = data.dateRange.to || startDate;
-    const datesToLog = getDatesInRange(startDate, endDate).filter(d => !isDateDisabled(d));
+    const datesToLog = getDatesInRange(startDate, endDate).filter(d => !isDateDisabled(d, vietnamHolidays));
 
     if (datesToLog.length === 0) {
-      toast({ title: "No Valid Dates", description: "Selected range contains no valid workdays.", variant: "destructive"});
+      toast({ title: "No Valid Dates", description: "Selected range contains no valid workdays (check for weekends/holidays).", variant: "destructive"});
       return;
     }
     
@@ -176,6 +183,8 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     toast({ title: "Success", description: `Logged ${newEntries.length} timesheet(s).` });
     onOpenChange(false);
   };
+  
+  const localIsDateDisabled = (date: Date) => isDateDisabled(date, vietnamHolidays);
 
   const watchedTodayPlan = form.watch('todayPlan');
   const watchedActualWork = form.watch('actualWork');
@@ -226,7 +235,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
                   selected={dateRange}
                   onSelect={setDateRange}
                   numberOfMonths={1}
-                  disabled={isDateDisabled}
+                  disabled={localIsDateDisabled}
                 />
               </PopoverContent>
             </Popover>
@@ -412,3 +421,4 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     </Sheet>
   );
 }
+

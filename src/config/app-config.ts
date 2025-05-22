@@ -1,3 +1,4 @@
+
 import type { ProjectOption } from '@/types';
 
 export const DEFAULT_USER_EMAIL = "vu.nam@sun-asterisk.com";
@@ -9,11 +10,5 @@ export const PROJECT_OPTIONS: ProjectOption[] = [
   { value: "NowCorp", label: "NowCorp" },
 ];
 
-// Define holidays as YYYY-MM-DD strings
-export const HOLIDAYS: string[] = [
-  "2024-01-01", // New Year's Day
-  "2024-12-25", // Christmas Day
-  "2025-01-01", 
-  "2025-12-25",
-  // Add more holidays as needed
-];
+// Static HOLIDAYS array is removed as we will fetch them dynamically.
+

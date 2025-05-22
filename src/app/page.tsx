@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2, Briefcase, Activity, AlertTriangle } from 'lucide-react';
-import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
+import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay, endOfMonth, eachDayOfInterval, isSameMonth, getYear } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -17,6 +17,21 @@ import { exportToCSV } from '@/lib/csv-utils';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
+import { useToast } from '@/hooks/use-toast';
+
+
+interface NagerDateHoliday {
+  date: string; // "YYYY-MM-DD"
+  localName: string;
+  name: string;
+  countryCode: string;
+  fixed: boolean;
+  global: boolean;
+  counties: string[] | null;
+  launchYear: number | null;
+  types: string[];
+}
+
 
 export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
@@ -24,6 +39,45 @@ export default function HomePage() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [initialModalDate, setInitialModalDate] = useState<Date | undefined>();
+
+  const [vietnamHolidays, setVietnamHolidays] = useState<string[]>([]);
+  const [holidaysByYear, setHolidaysByYear] = useState<Map<number, string[]>>(new Map());
+  const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const year = getYear(currentMonth);
+    if (holidaysByYear.has(year)) {
+      setVietnamHolidays(holidaysByYear.get(year)!);
+    } else {
+      setIsLoadingHolidays(true);
+      fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/VN`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Failed to fetch holidays for ${year}. Status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data: NagerDateHoliday[]) => {
+          const holidayDates = data.map(h => h.date);
+          setHolidaysByYear(prev => new Map(prev).set(year, holidayDates));
+          setVietnamHolidays(holidayDates);
+        })
+        .catch(error => {
+          console.error("Error fetching Vietnam holidays:", error);
+          setVietnamHolidays([]); // Fallback to empty list on error
+          toast({
+            title: "Could Not Load Holidays",
+            description: `Failed to fetch public holidays for ${year}. Calendar might not show all non-working days.`,
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsLoadingHolidays(false);
+        });
+    }
+  }, [currentMonth, holidaysByYear, toast]);
+
 
   const handleSaveTimesheet = (newEntries: TimesheetEntry[]) => {
     const updatedEntries = [...timesheetEntries];
@@ -44,17 +98,17 @@ export default function HomePage() {
   );
 
   const modifiers = useMemo(() => ({
-    holiday: (date: Date) => isHoliday(date),
+    holiday: (date: Date) => isHoliday(date, vietnamHolidays),
     weekend: (date: Date) => isWeekend(date),
     unloggedPastOrToday: (date: Date) => {
       const isCurrentMonthDay = isSameMonth(date, currentMonth);
       return isCurrentMonthDay &&
         isPastOrToday(date) && 
         !isWeekend(date) && 
-        !isHoliday(date) && 
+        !isHoliday(date, vietnamHolidays) && 
         !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date)));
     }
-  }), [currentMonth, loggedDates]);
+  }), [currentMonth, loggedDates, vietnamHolidays]);
 
   const modifiersClassNames = {
     holiday: '!text-destructive dark:!text-red-400', 
@@ -64,7 +118,7 @@ export default function HomePage() {
 
   const handleCalendarSelect = (date: Date | undefined) => {
     setSelectedDate(date); 
-    if (date && !isDateDisabled(date)) {
+    if (date && !isDateDisabled(date, vietnamHolidays)) {
       setInitialModalDate(date);
       setIsModalOpen(true);
     } else {
@@ -80,8 +134,8 @@ export default function HomePage() {
   }, [currentMonth]);
 
   const workingDaysThisMonth = useMemo(() => {
-    return daysInCurrentMonth.filter(day => !isDateDisabled(day)).length;
-  }, [daysInCurrentMonth]);
+    return daysInCurrentMonth.filter(day => !isDateDisabled(day, vietnamHolidays)).length;
+  }, [daysInCurrentMonth, vietnamHolidays]);
 
   const loggedDaysThisMonthCount = useMemo(() => {
     const uniqueLoggedDays = new Set(
@@ -95,11 +149,11 @@ export default function HomePage() {
   const daysToLogCount = useMemo(() => {
     return daysInCurrentMonth.filter(day => {
       const isPastAndInCurrentMonth = isPastOrToday(day) && isSameMonth(day, currentMonth);
-      const isWorkday = !isDateDisabled(day);
+      const isWorkday = !isDateDisabled(day, vietnamHolidays);
       const isLoggedForThisDay = loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(day)));
       return isPastAndInCurrentMonth && isWorkday && !isLoggedForThisDay;
     }).length;
-  }, [daysInCurrentMonth, loggedDates, currentMonth]);
+  }, [daysInCurrentMonth, loggedDates, currentMonth, vietnamHolidays]);
   
 
   return (
@@ -205,7 +259,7 @@ export default function HomePage() {
                     isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
                   ) : [];
                   const isDayLogged = entriesForDay.length > 0;
-                  const isDayHoliday = isCurrentMonthDay && isHoliday(date);
+                  const isDayHoliday = isCurrentMonthDay && isHoliday(date, vietnamHolidays);
                   const isPastUnloggedWorkday = 
                     isCurrentMonthDay &&
                     isPastOrToday(date) &&
@@ -261,7 +315,9 @@ export default function HomePage() {
         onSave={handleSaveTimesheet}
         existingEntries={timesheetEntries}
         initialDate={initialModalDate}
+        vietnamHolidays={vietnamHolidays}
       />
     </div>
   );
 }
+

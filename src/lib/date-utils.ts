@@ -1,13 +1,14 @@
-import { HOLIDAYS } from '@/config/app-config';
+
 import { addDays, format, parseISO, isWeekend as dfnsIsWeekend, eachDayOfInterval, isEqual, startOfDay } from 'date-fns';
 
 export function isWeekend(date: Date): boolean {
   return dfnsIsWeekend(date);
 }
 
-export function isHoliday(date: Date): boolean {
+export function isHoliday(date: Date, holidayList: string[] = []): boolean {
+  if (!holidayList || holidayList.length === 0) return false;
   const dateString = format(date, 'yyyy-MM-dd');
-  return HOLIDAYS.includes(dateString);
+  return holidayList.includes(dateString);
 }
 
 export function getDatesInRange(startDate: Date, endDate: Date): Date[] {
@@ -27,6 +28,7 @@ export function isPastOrToday(date: Date): boolean {
   return startOfDay(date) <= startOfDay(new Date());
 }
 
-export function isDateDisabled(date: Date): boolean {
-  return isWeekend(date) || isHoliday(date);
+export function isDateDisabled(date: Date, holidayList: string[] = []): boolean {
+  return isWeekend(date) || isHoliday(date, holidayList);
 }
+
