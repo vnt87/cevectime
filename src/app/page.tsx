@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2, Briefcase, Activity, AlertTriangle } from 'lucide-react';
-import { format, startOfMonth, addMonths, subMonths, isEqual, endOfMonth, eachDayOfInterval, isSameMonth, getYear } from 'date-fns';
+import { format, startOfMonth, addMonths, subMonths, isEqual, endOfMonth, eachDayOfInterval, isSameMonth, getYear, startOfDay } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -90,24 +90,41 @@ export default function HomePage() {
     [timesheetEntries]
   );
 
-  const modifiers = useMemo(() => ({
-    holiday: (date: Date) => isHoliday(date, vietnamHolidays),
-    weekend: (date: Date) => isWeekend(date),
-    unloggedPastOrToday: (date: Date) => {
-      const isCurrentMonthDay = isSameMonth(date, currentMonth);
-      return isCurrentMonthDay &&
-        isPastOrToday(date) && 
-        !isWeekend(date) && 
-        !isHoliday(date, vietnamHolidays) && 
-        !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date)));
+  const calendarModifiers = useMemo(() => {
+    const baseModifiers = {
+      holiday: (date: Date) => isHoliday(date, vietnamHolidays),
+      weekend: (date: Date) => isWeekend(date),
+    };
+    if (!isClient) {
+      return baseModifiers;
     }
-  }), [currentMonth, loggedDates, vietnamHolidays]);
+    return {
+      ...baseModifiers,
+      unloggedPastOrToday: (date: Date) => {
+        const isCurrentMonthDay = isSameMonth(date, currentMonth);
+        return isCurrentMonthDay &&
+          isPastOrToday(date) &&
+          !isWeekend(date) &&
+          !isHoliday(date, vietnamHolidays) &&
+          !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date)));
+      }
+    };
+  }, [currentMonth, loggedDates, vietnamHolidays, isClient]);
 
-  const modifiersClassNames = {
-    holiday: 'bg-diagonal-pattern !text-destructive dark:!text-red-400 font-medium', 
-    weekend: 'bg-diagonal-pattern', 
-    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none', 
-  };
+  const calendarModifiersClassNames = useMemo(() => {
+    const baseClasses = {
+      holiday: 'bg-diagonal-pattern !text-destructive dark:!text-red-400 font-medium',
+      weekend: 'bg-diagonal-pattern',
+    };
+    if (!isClient) {
+      return baseClasses;
+    }
+    return {
+      ...baseClasses,
+      unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none',
+    };
+  }, [isClient]);
+
 
   const handleCalendarSelect = (date: Date | undefined) => {
     setSelectedDate(date); 
@@ -204,7 +221,7 @@ export default function HomePage() {
       </div>
 
       <main className="pb-4 md:pb-8 px-4 md:px-8"> 
-        <Card className="shadow-lg w-full rounded-lg"> 
+        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
@@ -227,8 +244,8 @@ export default function HomePage() {
               onSelect={handleCalendarSelect}
               month={currentMonth}
               onMonthChange={setCurrentMonth}
-              modifiers={modifiers}
-              modifiersClassNames={modifiersClassNames}
+              modifiers={calendarModifiers}
+              modifiersClassNames={calendarModifiersClassNames}
               className="w-full border-t md:border md:rounded-b-lg" 
               classNames={{
                 month: "space-y-4 w-full",
@@ -236,7 +253,7 @@ export default function HomePage() {
                 head_row: "flex",
                 head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
                 row: "flex w-full border-t",
-                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0",
+                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 md:border-r-0 last:border-r-0",
                 day: cn(
                   "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
                 ),
@@ -281,7 +298,7 @@ export default function HomePage() {
                         {dayNumberFormatted}
                       </div>
 
-                      {isCurrentMonthDay && (
+                      {isClient && isCurrentMonthDay && (
                         <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
                           {isDayHoliday ? (
                             <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-1 py-0.5 rounded-sm w-full justify-center">
@@ -289,7 +306,7 @@ export default function HomePage() {
                               <span className="truncate">{holidayInfo?.localName || 'Holiday'}</span>
                             </div>
                           ) : isDayLogged ? (
-                            entriesForDay.slice(0, 1).map(entry => (
+                            entriesForDay.slice(0, 1).map(entry => ( // Show only the first entry if multiple on same day
                               <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
                                 <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
                                 <span className="truncate">{entry.project}</span>
@@ -322,5 +339,5 @@ export default function HomePage() {
       />
     </div>
   );
-}
 
+    
