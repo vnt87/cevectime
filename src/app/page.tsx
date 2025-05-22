@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2, Briefcase, Activity, AlertTriangle } from 'lucide-react';
-import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay, endOfMonth, eachDayOfInterval, isSameMonth, getYear } from 'date-fns';
+import { format, startOfMonth, addMonths, subMonths, isEqual, endOfMonth, eachDayOfInterval, isSameMonth, getYear } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -31,9 +31,16 @@ export default function HomePage() {
   const [holidaysByYear, setHolidaysByYear] = useState<Map<number, NagerDateHoliday[]>>(new Map());
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const year = getYear(currentMonth);
+    if (!isClient) return; // Don't fetch on server
+
     if (holidaysByYear.has(year)) {
       setVietnamHolidays(holidaysByYear.get(year)!);
     } else {
@@ -62,7 +69,7 @@ export default function HomePage() {
           setIsLoadingHolidays(false);
         });
     }
-  }, [currentMonth, holidaysByYear, toast]);
+  }, [currentMonth, holidaysByYear, toast, isClient]);
 
 
   const handleSaveTimesheet = (newEntries: TimesheetEntry[]) => {
@@ -120,26 +127,29 @@ export default function HomePage() {
   }, [currentMonth]);
 
   const workingDaysThisMonth = useMemo(() => {
+    if (!isClient) return 0; // Placeholder for SSR
     return daysInCurrentMonth.filter(day => !isDateDisabled(day, vietnamHolidays)).length;
-  }, [daysInCurrentMonth, vietnamHolidays]);
+  }, [daysInCurrentMonth, vietnamHolidays, isClient]);
 
   const loggedDaysThisMonthCount = useMemo(() => {
+    if (!isClient) return 0; // Placeholder for SSR
     const uniqueLoggedDays = new Set(
       timesheetEntries
         .filter(entry => isSameMonth(parseDate(entry.date), currentMonth))
         .map(entry => formatDate(parseDate(entry.date)))
     );
     return uniqueLoggedDays.size;
-  }, [timesheetEntries, currentMonth]);
+  }, [timesheetEntries, currentMonth, isClient]);
 
   const daysToLogCount = useMemo(() => {
+    if (!isClient) return 0; // Placeholder for SSR
     return daysInCurrentMonth.filter(day => {
       const isPastAndInCurrentMonth = isPastOrToday(day) && isSameMonth(day, currentMonth);
       const isWorkday = !isDateDisabled(day, vietnamHolidays);
       const isLoggedForThisDay = loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(day)));
       return isPastAndInCurrentMonth && isWorkday && !isLoggedForThisDay;
     }).length;
-  }, [daysInCurrentMonth, loggedDates, currentMonth, vietnamHolidays]);
+  }, [daysInCurrentMonth, loggedDates, currentMonth, vietnamHolidays, isClient]);
   
 
   return (
@@ -156,7 +166,7 @@ export default function HomePage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{workingDaysThisMonth}</div>
+              <div className="text-2xl font-bold">{isClient ? workingDaysThisMonth : "0"}</div>
               <p className="text-xs text-muted-foreground">in {format(currentMonth, 'MMMM')}</p>
             </CardContent>
           </Card>
@@ -166,8 +176,8 @@ export default function HomePage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loggedDaysThisMonthCount}</div>
-               <p className="text-xs text-muted-foreground">out of {workingDaysThisMonth} working days</p>
+              <div className="text-2xl font-bold">{isClient ? loggedDaysThisMonthCount : "0"}</div>
+               <p className="text-xs text-muted-foreground">out of {isClient ? workingDaysThisMonth : "0"} working days</p>
             </CardContent>
           </Card>
           <Card>
@@ -176,7 +186,7 @@ export default function HomePage() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{daysToLogCount}</div>
+              <div className="text-2xl font-bold">{isClient ? daysToLogCount : "0"}</div>
               <p className="text-xs text-muted-foreground">past workdays</p>
             </CardContent>
           </Card>
@@ -254,6 +264,7 @@ export default function HomePage() {
 
                   const isPastUnloggedWorkday = 
                     isCurrentMonthDay &&
+                    isClient && // Only determine this on client
                     isPastOrToday(date) &&
                     !isWeekend(date) &&
                     !isDayHoliday &&
@@ -312,3 +323,4 @@ export default function HomePage() {
     </div>
   );
 }
+
