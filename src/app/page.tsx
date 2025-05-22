@@ -51,9 +51,9 @@ export default function HomePage() {
   };
 
   const modifiersClassNames = {
-    holiday: '!text-destructive dark:!text-red-400',
-    weekend: 'bg-diagonal-pattern',
-    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none',
+    holiday: '!text-destructive dark:!text-red-400', // Applied to the day cell by react-day-picker
+    weekend: 'bg-diagonal-pattern', // Applied to the day cell
+    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none', // Applied to the day cell
   };
   
 
@@ -101,6 +101,7 @@ export default function HomePage() {
               modifiersClassNames={modifiersClassNames}
               className="w-full border-t md:border md:rounded-b-lg" 
               classNames={{
+                month: "space-y-4 w-full", // Ensure the month container is full width
                 table: "w-full border-collapse",
                 head_row: "flex",
                 head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
@@ -166,3 +167,4 @@ export default function HomePage() {
     </div>
   );
 }
+
