@@ -32,7 +32,7 @@ interface TimesheetFormProps {
   onSave: (newEntries: TimesheetEntry[]) => void;
   existingEntries: TimesheetEntry[];
   initialDate?: Date;
-  vietnamHolidays: NagerDateHoliday[]; 
+  vietnamHolidays: NagerDateHoliday[];
 }
 
 const formSchema = z.object({
@@ -65,6 +65,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [actualWorkManuallyEdited, setActualWorkManuallyEdited] = useState(false);
 
   const form = useForm<TimesheetFormData>({
     resolver: zodResolver(formSchema),
@@ -84,13 +85,13 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
   useEffect(() => {
     if (isOpen) {
       let effectiveInitialDate = startOfDay(new Date());
-      if (initialDate && !isDateDisabled(initialDate, vietnamHolidays)) { 
+      if (initialDate && !isDateDisabled(initialDate, vietnamHolidays)) {
         effectiveInitialDate = startOfDay(initialDate);
       } else if (initialDate && isDateDisabled(initialDate, vietnamHolidays)) {
-         effectiveInitialDate = startOfDay(new Date()); 
+         effectiveInitialDate = startOfDay(new Date());
          toast({ title: "Notice", description: "Selected date is a non-working day. Please pick a valid date.", variant: "default" });
       }
-      
+
       form.reset({
         dateRange: { from: effectiveInitialDate, to: effectiveInitialDate },
         loggedTime: DEFAULT_LOGGED_TIME,
@@ -104,6 +105,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
         freeComments: '',
       });
       setDateRange({ from: effectiveInitialDate, to: effectiveInitialDate });
+      setActualWorkManuallyEdited(false); // Reset flag when form opens/resets
     }
   }, [isOpen, initialDate, form, vietnamHolidays, toast]);
 
@@ -111,6 +113,21 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
   useEffect(() => {
     form.setValue('dateRange', { from: dateRange?.from, to: dateRange?.to });
   }, [dateRange, form]);
+
+  const watchedTodayPlan = form.watch('todayPlan');
+  const watchedActualWork = form.watch('actualWork');
+  const watchedIssues = form.watch('issues');
+  const watchedTomorrowPlan = form.watch('tomorrowPlan');
+  const watchedFreeComments = form.watch('freeComments');
+  const watchedHasIssues = form.watch('hasIssues');
+
+  useEffect(() => {
+    if (!actualWorkManuallyEdited) {
+      form.setValue('actualWork', watchedTodayPlan, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [watchedTodayPlan, actualWorkManuallyEdited, form]);
+
+  const { onChange: actualWorkRHFOnChange, ...restActualWorkProps } = form.register('actualWork');
 
 
   const handleSuggestTomorrowPlan = async () => {
@@ -160,7 +177,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
       toast({ title: "No Valid Dates", description: "Selected range contains no valid workdays (check for weekends/holidays).", variant: "destructive"});
       return;
     }
-    
+
     const finalUserEmail = data.user.includes('@') ? data.user : `${data.user}@sun-asterisk.com`;
 
     const newEntries: TimesheetEntry[] = datesToLog.map(date => ({
@@ -180,15 +197,8 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     toast({ title: "Success", description: `Logged ${newEntries.length} timesheet(s).` });
     onOpenChange(false);
   };
-  
-  const localIsDateDisabled = (date: Date) => isDateDisabled(date, vietnamHolidays);
 
-  const watchedTodayPlan = form.watch('todayPlan');
-  const watchedActualWork = form.watch('actualWork');
-  const watchedIssues = form.watch('issues');
-  const watchedTomorrowPlan = form.watch('tomorrowPlan');
-  const watchedFreeComments = form.watch('freeComments');
-  const watchedHasIssues = form.watch('hasIssues');
+  const localIsDateDisabled = (date: Date) => isDateDisabled(date, vietnamHolidays);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -311,7 +321,17 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
 
           <div>
             <Label htmlFor="actualWork">Actual Work</Label>
-            <Textarea id="actualWork" className="mt-1 min-h-[80px]" maxLength={400} {...form.register('actualWork')} />
+            <Textarea
+              id="actualWork"
+              className="mt-1 min-h-[80px]"
+              maxLength={400}
+              {...restActualWorkProps}
+              onChange={(e) => {
+                actualWorkRHFOnChange(e);
+                setActualWorkManuallyEdited(true);
+              }}
+              value={watchedActualWork} // Ensure value is controlled
+            />
              <div className="text-xs text-muted-foreground text-right mt-1">
               {watchedActualWork?.length || 0} / 400
             </div>
@@ -319,7 +339,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
               <p className="text-sm text-destructive mt-1">{form.formState.errors.actualWork.message}</p>
             )}
           </div>
-          
+
           <div>
             <Label>Do you have any issues?</Label>
             <Controller
@@ -330,8 +350,8 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
                   onValueChange={(value) => {
                     field.onChange(value);
                     if (value === 'no') {
-                      form.setValue('issues', ''); 
-                      form.clearErrors('issues'); 
+                      form.setValue('issues', '');
+                      form.clearErrors('issues');
                     }
                   }}
                   value={field.value}
@@ -353,11 +373,11 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
           {watchedHasIssues === 'yes' && (
             <div>
               <Label htmlFor="issues">Issues Description</Label>
-              <Textarea 
-                id="issues" 
-                className="mt-1 min-h-[80px]" 
-                maxLength={400} 
-                {...form.register('issues')} 
+              <Textarea
+                id="issues"
+                className="mt-1 min-h-[80px]"
+                maxLength={400}
+                {...form.register('issues')}
               />
               <div className="text-xs text-muted-foreground text-right mt-1">
                 {watchedIssues?.length || 0} / 400
@@ -372,11 +392,11 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
           <div>
             <div className="flex justify-between items-center">
                 <Label htmlFor="tomorrowPlan">Tomorrow Plan</Label>
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleSuggestTomorrowPlan} 
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSuggestTomorrowPlan}
                     disabled={isSuggesting}
                     className="text-xs"
                 >
@@ -403,7 +423,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
               <p className="text-sm text-destructive mt-1">{form.formState.errors.freeComments.message}</p>
             )}
           </div>
-          
+
           <SheetFooter className="pt-4">
             <SheetClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
