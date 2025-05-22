@@ -76,7 +76,7 @@ export default function HomePage() {
       </header>
 
       <main>
-        <Card className="shadow-lg">
+        <Card className="shadow-lg w-full">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
