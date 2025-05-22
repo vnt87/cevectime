@@ -21,7 +21,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose }
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { TimesheetEntry } from '@/types';
+import type { TimesheetEntry, NagerDateHoliday } from '@/types';
 import { DEFAULT_USER_EMAIL, DEFAULT_LOGGED_TIME, PROJECT_OPTIONS } from '@/config/app-config';
 import { getDatesInRange, isDateDisabled, formatDate } from '@/lib/date-utils';
 import { suggestTomorrowPlan } from '@/ai/flows/suggest-tomorrow-plan';
@@ -32,7 +32,7 @@ interface TimesheetFormProps {
   onSave: (newEntries: TimesheetEntry[]) => void;
   existingEntries: TimesheetEntry[];
   initialDate?: Date;
-  vietnamHolidays: string[]; // Added prop for holidays
+  vietnamHolidays: NagerDateHoliday[]; 
 }
 
 const formSchema = z.object({
@@ -84,13 +84,10 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
   useEffect(() => {
     if (isOpen) {
       let effectiveInitialDate = startOfDay(new Date());
-      if (initialDate && !isDateDisabled(initialDate, vietnamHolidays)) { // Check if initialDate is not disabled
+      if (initialDate && !isDateDisabled(initialDate, vietnamHolidays)) { 
         effectiveInitialDate = startOfDay(initialDate);
       } else if (initialDate && isDateDisabled(initialDate, vietnamHolidays)) {
-         // If initial date is disabled (e.g. holiday), don't set it, let user pick.
-         // Or, reset to a non-disabled default. For now, just don't pre-fill a disabled one.
-         effectiveInitialDate = startOfDay(new Date()); // Fallback to today or undefined
-         // Optionally, inform user initial selected date was a holiday
+         effectiveInitialDate = startOfDay(new Date()); 
          toast({ title: "Notice", description: "Selected date is a non-working day. Please pick a valid date.", variant: "default" });
       }
       
@@ -421,4 +418,3 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     </Sheet>
   );
 }
-

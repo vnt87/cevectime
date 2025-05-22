@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TimesheetForm } from '@/components/timesheet-form';
-import type { TimesheetEntry } from '@/types';
+import type { TimesheetEntry, NagerDateHoliday } from '@/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate, isDateDisabled } from '@/lib/date-utils';
 import { exportToCSV } from '@/lib/csv-utils';
@@ -20,19 +20,6 @@ import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { useToast } from '@/hooks/use-toast';
 
 
-interface NagerDateHoliday {
-  date: string; // "YYYY-MM-DD"
-  localName: string;
-  name: string;
-  countryCode: string;
-  fixed: boolean;
-  global: boolean;
-  counties: string[] | null;
-  launchYear: number | null;
-  types: string[];
-}
-
-
 export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,8 +27,8 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [initialModalDate, setInitialModalDate] = useState<Date | undefined>();
 
-  const [vietnamHolidays, setVietnamHolidays] = useState<string[]>([]);
-  const [holidaysByYear, setHolidaysByYear] = useState<Map<number, string[]>>(new Map());
+  const [vietnamHolidays, setVietnamHolidays] = useState<NagerDateHoliday[]>([]);
+  const [holidaysByYear, setHolidaysByYear] = useState<Map<number, NagerDateHoliday[]>>(new Map());
   const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
   const { toast } = useToast();
 
@@ -59,9 +46,8 @@ export default function HomePage() {
           return res.json();
         })
         .then((data: NagerDateHoliday[]) => {
-          const holidayDates = data.map(h => h.date);
-          setHolidaysByYear(prev => new Map(prev).set(year, holidayDates));
-          setVietnamHolidays(holidayDates);
+          setHolidaysByYear(prev => new Map(prev).set(year, data));
+          setVietnamHolidays(data);
         })
         .catch(error => {
           console.error("Error fetching Vietnam holidays:", error);
@@ -111,7 +97,7 @@ export default function HomePage() {
   }), [currentMonth, loggedDates, vietnamHolidays]);
 
   const modifiersClassNames = {
-    holiday: '!text-destructive dark:!text-red-400', 
+    holiday: 'bg-diagonal-pattern !text-destructive dark:!text-red-400 font-medium', 
     weekend: 'bg-diagonal-pattern', 
     unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none', 
   };
@@ -259,7 +245,13 @@ export default function HomePage() {
                     isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
                   ) : [];
                   const isDayLogged = entriesForDay.length > 0;
-                  const isDayHoliday = isCurrentMonthDay && isHoliday(date, vietnamHolidays);
+                  
+                  let holidayInfo: NagerDateHoliday | undefined;
+                  if (isCurrentMonthDay) {
+                    holidayInfo = vietnamHolidays.find(h => h.date === formatDate(date));
+                  }
+                  const isDayHoliday = !!holidayInfo;
+
                   const isPastUnloggedWorkday = 
                     isCurrentMonthDay &&
                     isPastOrToday(date) &&
@@ -281,9 +273,9 @@ export default function HomePage() {
                       {isCurrentMonthDay && (
                         <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
                           {isDayHoliday ? (
-                            <div className="flex items-center text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
+                            <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-1 py-0.5 rounded-sm w-full justify-center">
                               <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
-                              <span className="truncate">Holiday</span>
+                              <span className="truncate">{holidayInfo?.localName || 'Holiday'}</span>
                             </div>
                           ) : isDayLogged ? (
                             entriesForDay.slice(0, 1).map(entry => (
@@ -320,4 +312,3 @@ export default function HomePage() {
     </div>
   );
 }
-
