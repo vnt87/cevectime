@@ -60,24 +60,26 @@ export default function HomePage() {
   
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
-      <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <Logo />
-        <div className="flex gap-2">
-          <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button onClick={() => setIsModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Log Timesheet
-          </Button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="px-4 md:px-8 pt-4 md:pt-8">
+        <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <Logo />
+          <div className="flex gap-2">
+            <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button onClick={() => setIsModalOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Log Timesheet
+            </Button>
+          </div>
+        </header>
+      </div>
 
-      <main>
-        <Card className="shadow-lg w-full">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <main className="pb-4 md:pb-8">
+        <Card className="shadow-lg w-full rounded-none md:rounded-lg">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
             </CardTitle>
@@ -99,13 +101,13 @@ export default function HomePage() {
               onMonthChange={setCurrentMonth}
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
-              className="w-full rounded-md border" 
+              className="w-full border-t md:border md:rounded-b-lg" 
               classNames={{
                 table: "w-full border-collapse",
                 head_row: "flex",
                 head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
                 row: "flex w-full border-t",
-                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0",
+                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 last:border-r-0 md:last:border-r",
                 day: cn(
                   "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
                 ),
