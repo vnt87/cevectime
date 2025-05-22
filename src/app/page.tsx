@@ -92,7 +92,7 @@ export default function HomePage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0 sm:p-2 md:p-4">
+          <CardContent className="p-0">
             <Calendar
               mode="single" // Keeps single date selection behavior
               month={currentMonth}
