@@ -3,8 +3,8 @@
 
 import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2 } from 'lucide-react';
-import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2, Briefcase, Activity, AlertTriangle } from 'lucide-react';
+import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -42,15 +42,18 @@ export default function HomePage() {
     [timesheetEntries]
   );
 
-  const modifiers = {
+  const modifiers = useMemo(() => ({
     holiday: (date: Date) => isHoliday(date),
     weekend: (date: Date) => isWeekend(date),
-    unloggedPastOrToday: (date: Date) => 
-      isPastOrToday(date) && 
-      !isWeekend(date) && 
-      !isHoliday(date) && 
-      !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date))),
-  };
+    unloggedPastOrToday: (date: Date) => {
+      const isCurrentMonthDay = isSameMonth(date, currentMonth);
+      return isCurrentMonthDay &&
+        isPastOrToday(date) && 
+        !isWeekend(date) && 
+        !isHoliday(date) && 
+        !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date)));
+    }
+  }), [currentMonth, loggedDates]);
 
   const modifiersClassNames = {
     holiday: '!text-destructive dark:!text-red-400', 
@@ -59,22 +62,49 @@ export default function HomePage() {
   };
 
   const handleCalendarSelect = (date: Date | undefined) => {
-    setSelectedDate(date); // For visual feedback on calendar
+    setSelectedDate(date); 
     if (date && !isDateDisabled(date)) {
       setInitialModalDate(date);
       setIsModalOpen(true);
     } else {
-      // If a disabled date is clicked or selection is cleared,
-      // ensure we don't pass an undefined or old date to the modal if opened by button next.
       setInitialModalDate(undefined); 
     }
   };
+
+  const daysInCurrentMonth = useMemo(() => {
+    return eachDayOfInterval({
+      start: startOfMonth(currentMonth),
+      end: endOfMonth(currentMonth),
+    });
+  }, [currentMonth]);
+
+  const workingDaysThisMonth = useMemo(() => {
+    return daysInCurrentMonth.filter(day => !isDateDisabled(day)).length;
+  }, [daysInCurrentMonth]);
+
+  const loggedDaysThisMonthCount = useMemo(() => {
+    const uniqueLoggedDays = new Set(
+      timesheetEntries
+        .filter(entry => isSameMonth(parseDate(entry.date), currentMonth))
+        .map(entry => formatDate(parseDate(entry.date)))
+    );
+    return uniqueLoggedDays.size;
+  }, [timesheetEntries, currentMonth]);
+
+  const daysToLogCount = useMemo(() => {
+    return daysInCurrentMonth.filter(day => {
+      const isPastAndInCurrentMonth = isPastOrToday(day) && isSameMonth(day, currentMonth);
+      const isWorkday = !isDateDisabled(day);
+      const isLoggedForThisDay = loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(day)));
+      return isPastAndInCurrentMonth && isWorkday && !isLoggedForThisDay;
+    }).length;
+  }, [daysInCurrentMonth, loggedDates, currentMonth]);
   
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="px-4 md:px-8 pt-4 md:pt-8"> 
-        <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <header className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
           <div className="flex gap-2">
             <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
@@ -87,6 +117,38 @@ export default function HomePage() {
             </Button>
           </div>
         </header>
+         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Working Days</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{workingDaysThisMonth}</div>
+              <p className="text-xs text-muted-foreground">in {format(currentMonth, 'MMMM')}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Logged Days</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loggedDaysThisMonthCount}</div>
+               <p className="text-xs text-muted-foreground">out of {workingDaysThisMonth} working days</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Needs Logging</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{daysToLogCount}</div>
+              <p className="text-xs text-muted-foreground">past workdays</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <main className="pb-4 md:pb-8"> 
@@ -134,34 +196,51 @@ export default function HomePage() {
               }}
               components={{
                 DayContent: ({ date, displayMonth }) => {
-                  const isCurrentMonth = isEqual(startOfMonth(date), startOfMonth(displayMonth));
+                  const isCurrentMonthDay = isEqual(startOfMonth(date), startOfMonth(displayMonth));
                   const dayNumberFormatted = format(date, 'd');
                   
-                  const entriesForDay = isCurrentMonth ? timesheetEntries.filter(entry => 
+                  const entriesForDay = isCurrentMonthDay ? timesheetEntries.filter(entry => 
                     isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
                   ) : [];
                   const isDayLogged = entriesForDay.length > 0;
-                  const isDayHoliday = isCurrentMonth && isHoliday(date);
+                  const isDayHoliday = isCurrentMonthDay && isHoliday(date);
+                  const isPastUnloggedWorkday = 
+                    isCurrentMonthDay &&
+                    isPastOrToday(date) &&
+                    !isWeekend(date) &&
+                    !isDayHoliday &&
+                    !isDayLogged;
 
                   return (
                     <>
-                      <div className={`text-xs font-medium self-start ${!isCurrentMonth ? 'text-muted-foreground/70' : ''}`}>
+                      <div 
+                        className={cn(
+                          "text-xs font-medium self-start",
+                          !isCurrentMonthDay && 'text-muted-foreground/70'
+                        )}
+                      >
                         {dayNumberFormatted}
                       </div>
-                      {isCurrentMonth && (
-                        <div className="self-stretch space-y-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-left w-full mt-1">
-                          {isDayHoliday && (
-                            <div className="text-[0.65rem] leading-tight flex items-center text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-800/30 px-1 py-0.5 rounded-sm">
+
+                      {isCurrentMonthDay && (
+                        <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
+                          {isDayHoliday ? (
+                            <div className="flex items-center text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
                               <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
                               <span className="truncate">Holiday</span>
                             </div>
-                          )}
-                          {isDayLogged && !isDayHoliday && entriesForDay.slice(0, 2).map(entry => (
-                            <div key={entry.id} className="text-[0.65rem] leading-tight flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm">
-                              <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
-                              <span className="truncate">{entry.project}</span>
+                          ) : isDayLogged ? (
+                            entriesForDay.slice(0, 1).map(entry => (
+                              <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
+                                <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                                <span className="truncate">{entry.project}</span>
+                              </div>
+                            ))
+                          ) : isPastUnloggedWorkday ? (
+                            <div className="text-muted-foreground px-1 py-0.5">
+                              No logged time
                             </div>
-                          ))}
+                          ) : null}
                         </div>
                       )}
                     </>

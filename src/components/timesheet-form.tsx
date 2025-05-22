@@ -105,7 +105,6 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
 
 
   useEffect(() => {
-    // This effect updates the form's dateRange value when the local dateRange state changes.
     form.setValue('dateRange', { from: dateRange?.from, to: dateRange?.to });
   }, [dateRange, form]);
 
@@ -114,7 +113,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     const { todayPlan, actualWork, issues, hasIssues } = form.getValues();
     const issuesToConsider = hasIssues === 'yes' ? issues : 'None';
 
-    if (!todayPlan || !actualWork ) { // issues is optional for suggestion if hasIssues is 'no'
+    if (!todayPlan || !actualWork ) {
       toast({
         title: "Missing Information",
         description: "Please fill in 'Today plan' and 'Actual work' to get suggestions.",
@@ -252,11 +251,20 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
 
           <div>
             <Label htmlFor="user">Username</Label>
-            <Input id="user" type="text" className="mt-1" {...form.register('user')} />
+            <div className="flex items-center mt-1">
+              <Input
+                id="user"
+                type="text"
+                className="rounded-r-none focus:z-10 relative"
+                {...form.register('user')}
+              />
+              <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-input bg-secondary text-muted-foreground text-sm h-10">
+                @sun-asterisk.com
+              </span>
+            </div>
             {form.formState.errors.user && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.user.message}</p>
             )}
-             <p className="text-xs text-muted-foreground mt-1">Enter your username (e.g., vu.nam). Domain @sun-asterisk.com will be added.</p>
           </div>
 
           <div>
