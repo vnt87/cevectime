@@ -237,94 +237,101 @@ export default function HomePage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0"> 
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={handleCalendarSelect}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
-              modifiers={calendarModifiers}
-              modifiersClassNames={calendarModifiersClassNames}
-              className="w-full border-t md:border md:rounded-b-lg" 
-              classNames={{
-                month: "space-y-4 w-full",
-                table: "w-full border-collapse",
-                head_row: "flex",
-                head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
-                row: "flex w-full border-t",
-                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 md:border-r-0 last:border-r-0",
-                day: cn(
-                  "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
-                ),
-                day_selected: 
-                  "ring-2 ring-primary ring-inset bg-primary/10 text-primary-foreground dark:text-primary",
-                day_today: "bg-accent/30 text-accent-foreground font-bold",
-                day_outside: "text-muted-foreground opacity-50",
-                day_disabled: "text-muted-foreground opacity-40 line-through cursor-not-allowed",
-              }}
-              components={{
-                DayContent: ({ date, displayMonth }) => {
-                  const isCurrentMonthDay = isEqual(startOfMonth(date), startOfMonth(displayMonth));
-                  const dayNumberFormatted = format(date, 'd');
-                  
-                  const entriesForDay = isCurrentMonthDay ? timesheetEntries.filter(entry => 
-                    isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
-                  ) : [];
-                  const isDayLogged = entriesForDay.length > 0;
-                  
-                  let holidayInfo: NagerDateHoliday | undefined;
-                  if (isCurrentMonthDay) {
-                    holidayInfo = vietnamHolidays.find(h => h.date === formatDate(date));
-                  }
-                  const isDayHoliday = !!holidayInfo;
+          <CardContent className="p-0">
+            {isClient ? (
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleCalendarSelect}
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
+                modifiers={calendarModifiers}
+                modifiersClassNames={calendarModifiersClassNames}
+                className="w-full border-t md:border md:rounded-b-lg" 
+                classNames={{
+                  month: "space-y-4 w-full",
+                  table: "w-full border-collapse",
+                  head_row: "flex",
+                  head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
+                  row: "flex w-full border-t",
+                  cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 md:border-r-0 last:border-r-0",
+                  day: cn(
+                    "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
+                  ),
+                  day_selected: 
+                    "ring-2 ring-primary ring-inset bg-primary/10 text-primary-foreground dark:text-primary",
+                  day_today: "bg-accent/30 text-accent-foreground font-bold",
+                  day_outside: "text-muted-foreground opacity-50",
+                  day_disabled: "text-muted-foreground opacity-40 line-through cursor-not-allowed",
+                }}
+                components={{
+                  DayContent: ({ date, displayMonth }) => {
+                    const isCurrentMonthDay = isEqual(startOfMonth(date), startOfMonth(displayMonth));
+                    const dayNumberFormatted = format(date, 'd');
+                    
+                    const entriesForDay = isCurrentMonthDay ? timesheetEntries.filter(entry => 
+                      isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
+                    ) : [];
+                    const isDayLogged = entriesForDay.length > 0;
+                    
+                    let holidayInfo: NagerDateHoliday | undefined;
+                    if (isCurrentMonthDay) {
+                      holidayInfo = vietnamHolidays.find(h => h.date === formatDate(date));
+                    }
+                    const isDayHoliday = !!holidayInfo;
 
-                  const isPastUnloggedWorkday = 
-                    isCurrentMonthDay &&
-                    isClient && // Only determine this on client
-                    isPastOrToday(date) &&
-                    !isWeekend(date) &&
-                    !isDayHoliday &&
-                    !isDayLogged;
+                    const isPastUnloggedWorkday = 
+                      isCurrentMonthDay &&
+                      isClient && 
+                      isPastOrToday(date) &&
+                      !isWeekend(date) &&
+                      !isDayHoliday &&
+                      !isDayLogged;
 
-                  return (
-                    <>
-                      <div 
-                        className={cn(
-                          "text-xs font-medium self-start",
-                          !isCurrentMonthDay && 'text-muted-foreground/70'
-                        )}
-                      >
-                        {dayNumberFormatted}
-                      </div>
-
-                      {isClient && isCurrentMonthDay && (
-                        <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
-                          {isDayHoliday ? (
-                            <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-1 py-0.5 rounded-sm w-full justify-center">
-                              <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
-                              <span className="truncate">{holidayInfo?.localName || 'Holiday'}</span>
-                            </div>
-                          ) : isDayLogged ? (
-                            entriesForDay.slice(0, 1).map(entry => ( // Show only the first entry if multiple on same day
-                              <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
-                                <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
-                                <span className="truncate">{entry.project}</span>
-                              </div>
-                            ))
-                          ) : isPastUnloggedWorkday ? (
-                            <div className="text-muted-foreground px-1 py-0.5">
-                              No logged time
-                            </div>
-                          ) : null}
+                    return (
+                      <>
+                        <div 
+                          className={cn(
+                            "text-xs font-medium self-start",
+                            !isCurrentMonthDay && 'text-muted-foreground/70'
+                          )}
+                        >
+                          {dayNumberFormatted}
                         </div>
-                      )}
-                    </>
-                  );
-                },
-              }}
-              showOutsideDays
-            />
+
+                        {isClient && isCurrentMonthDay && (
+                          <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
+                            {isDayHoliday ? (
+                              <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-1 py-0.5 rounded-sm w-full justify-center">
+                                <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                                <span className="truncate">{holidayInfo?.localName || 'Holiday'}</span>
+                              </div>
+                            ) : isDayLogged ? (
+                              entriesForDay.slice(0, 1).map(entry => ( 
+                                <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
+                                  <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                                  <span className="truncate">{entry.project}</span>
+                                </div>
+                              ))
+                            ) : isPastUnloggedWorkday ? (
+                              <div className="text-muted-foreground px-1 py-0.5">
+                                No logged time
+                              </div>
+                            ) : null}
+                          </div>
+                        )}
+                      </>
+                    );
+                  },
+                }}
+                showOutsideDays
+                today={new Date()} // Explicitly pass today for client-side consistency
+              />
+            ) : (
+              <div className="flex h-[300px] w-full items-center justify-center rounded-md border bg-muted/20 p-4 text-muted-foreground">
+                Loading Calendar...
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
@@ -339,5 +346,4 @@ export default function HomePage() {
       />
     </div>
   );
-
-    
+}
