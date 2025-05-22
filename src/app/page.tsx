@@ -16,7 +16,7 @@ import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate, isDateDisab
 import { exportToCSV } from '@/lib/csv-utils';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
-import { ThemeToggleButton } from '@/components/theme-toggle-button'; // Added ThemeToggleButton
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 
 export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
@@ -107,7 +107,7 @@ export default function HomePage() {
       <div className="px-4 md:px-8 pt-4 md:pt-8"> 
         <header className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
-          <ThemeToggleButton /> {/* Moved ThemeToggleButton here */}
+          <ThemeToggleButton />
         </header>
          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card>
@@ -141,7 +141,6 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-         {/* Moved buttons here */}
         <div className="mb-6 flex flex-col sm:flex-row justify-end items-center gap-2">
             <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
               <Download className="mr-2 h-4 w-4" />
@@ -154,8 +153,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      <main className="pb-4 md:pb-8"> 
-        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
+      <main className="pb-4 md:pb-8 px-4 md:px-8"> 
+        <Card className="shadow-lg w-full rounded-lg"> 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
@@ -187,7 +186,7 @@ export default function HomePage() {
                 head_row: "flex",
                 head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
                 row: "flex w-full border-t",
-                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 last:border-r-0 md:last:border-r",
+                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0",
                 day: cn(
                   "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
                 ),

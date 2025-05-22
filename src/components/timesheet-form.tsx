@@ -255,7 +255,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
               <Input
                 id="user"
                 type="text"
-                className="rounded-r-none focus:z-10 relative"
+                className="flex-1 min-w-0 rounded-r-none focus:z-10 relative"
                 {...form.register('user')}
               />
               <span className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-input bg-secondary text-muted-foreground text-sm h-10">

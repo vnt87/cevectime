@@ -41,38 +41,38 @@
   }
 
   .dark {
-    --background: 240 60% 10%; 
-    --foreground: 225 50% 98%;
-    --card: 240 60% 10%;
-    --card-foreground: 225 50% 98%;
-    --popover: 240 60% 10%;
-    --popover-foreground: 225 50% 98%;
-    --primary: 231 48% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 50% 20%;
-    --secondary-foreground: 225 50% 98%;
-    --muted: 240 50% 20%;
-    --muted-foreground: 225 50% 70%;
-    --accent: 185 100% 75%;
-    --accent-foreground: 231 48% 28%;
-    --destructive: 0 62.8% 30.6%;
+    --background: 223 15% 11%; 
+    --foreground: 210 14% 83%;
+    --card: 225 13% 19%;
+    --card-foreground: 210 14% 83%;
+    --popover: 225 13% 22%;
+    --popover-foreground: 210 14% 83%;
+    --primary: 212 71% 60%;
+    --primary-foreground: 210 100% 98%;
+    --secondary: 220 15% 25%;
+    --secondary-foreground: 210 14% 75%;
+    --muted: 220 10% 15%;
+    --muted-foreground: 210 10% 55%;
+    --accent: 45 90% 55%; /* Gold/Yellowish accent, similar to some highlights in reference */
+    --accent-foreground: 223 15% 11%; 
+    --destructive: 0 60% 50%; /* Slightly desaturated red for dark mode destructive elements */
     --destructive-foreground: 0 0% 98%;
-    --border: 240 50% 25%;
-    --input: 240 50% 25%;
-    --ring: 231 48% 48%;
-    --chart-1: 220 70% 50%;
+    --border: 223 11% 26%;
+    --input: 225 13% 22%;
+    --ring: 212 71% 60%;
+    --chart-1: 212 71% 60%; /* primary */
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 55% 12%;
-    --sidebar-foreground: 225 50% 95%;
-    --sidebar-primary: 231 48% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 185 100% 75%;
-    --sidebar-accent-foreground: 231 48% 28%;
-    --sidebar-border: 240 50% 25%;
-    --sidebar-ring: 231 48% 48%;
+    --sidebar-background: 220 15% 15%;
+    --sidebar-foreground: 210 14% 83%;
+    --sidebar-primary: 212 71% 60%;
+    --sidebar-primary-foreground: 210 100% 98%;
+    --sidebar-accent: 45 90% 55%;
+    --sidebar-accent-foreground: 223 15% 11%;
+    --sidebar-border: 223 11% 22%; /* Slightly darker than main border for sidebar internal elements */
+    --sidebar-ring: 212 71% 60%;
   }
 
   .bg-diagonal-pattern {
