@@ -1,8 +1,9 @@
+
 "use client";
 
 import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar as CalendarIconLucide, ChevronLeft, ChevronRight, Download, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2 } from 'lucide-react';
 import { format, startOfMonth, addMonths, subMonths, isEqual, startOfDay } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -11,9 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TimesheetForm } from '@/components/timesheet-form';
 import type { TimesheetEntry } from '@/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { isWeekend, isHoliday, isPastOrToday, isDateDisabled, parseDate, formatDate } from '@/lib/date-utils';
+import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate } from '@/lib/date-utils';
 import { exportToCSV } from '@/lib/csv-utils';
 import { Logo } from '@/components/logo';
+import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
@@ -21,12 +23,10 @@ export default function HomePage() {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
 
   const handleSaveTimesheet = (newEntries: TimesheetEntry[]) => {
-    // Filter out any entries that might already exist for the same date and project to avoid duplicates (simple check)
     const updatedEntries = [...timesheetEntries];
     newEntries.forEach(newEntry => {
       const existingIndex = updatedEntries.findIndex(e => e.date === newEntry.date && e.project === newEntry.project);
       if (existingIndex > -1) {
-        // Replace if exists (or decide on other logic, e.g., alert user)
         updatedEntries[existingIndex] = newEntry;
       } else {
         updatedEntries.push(newEntry);
@@ -41,7 +41,6 @@ export default function HomePage() {
   );
 
   const modifiers = {
-    logged: loggedDates,
     holiday: (date: Date) => isHoliday(date),
     weekend: (date: Date) => isWeekend(date),
     unloggedPastOrToday: (date: Date) => 
@@ -49,23 +48,16 @@ export default function HomePage() {
       !isWeekend(date) && 
       !isHoliday(date) && 
       !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date))),
-    disabled: (date: Date) => isDateDisabled(date),
+    // disabled is implicitly handled by react-day-picker based on its own props like `disabled` dates
   };
 
   const modifiersClassNames = {
-    logged: 'bg-green-200 dark:bg-green-700 rounded-md text-green-900 dark:text-green-100 font-semibold',
-    holiday: 'text-destructive line-through opacity-70',
-    weekend: 'text-muted-foreground opacity-70',
-    unloggedPastOrToday: 'bg-destructive/20 dark:bg-destructive/30 rounded-md text-destructive dark:text-red-400',
-    today: 'border-2 border-primary rounded-md',
-    disabled: 'text-muted-foreground opacity-50 cursor-not-allowed',
+    holiday: '!text-destructive dark:!text-red-400', // Basic style for holiday text color if not overridden by DayContent
+    weekend: 'bg-diagonal-pattern',
+    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none',
+    // today styling is handled by classNames.day_today
   };
   
-  // Ensure selected styling takes precedence
-  const todayStyle = {
-    border: '2px solid hsl(var(--primary))',
-    borderRadius: 'var(--radius)',
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
@@ -102,22 +94,61 @@ export default function HomePage() {
           </CardHeader>
           <CardContent className="p-0 sm:p-2 md:p-4">
             <Calendar
-              mode="single"
+              mode="single" // Keeps single date selection behavior
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
-              className="w-full p-3 rounded-md border"
+              className="w-full rounded-md border" 
               classNames={{
-                day_selected: 'bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90',
-                day_today: 'font-bold text-primary',
+                table: "w-full border-collapse",
+                head_row: "flex",
+                head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
+                row: "flex w-full border-t",
+                cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0",
+                day: cn(
+                  "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
+                ),
+                day_selected: 
+                  "ring-2 ring-primary ring-inset bg-primary/10 text-primary-foreground dark:text-primary",
+                day_today: "bg-accent/30 text-accent-foreground font-bold",
+                day_outside: "text-muted-foreground opacity-50",
+                day_disabled: "text-muted-foreground opacity-40 line-through",
               }}
               components={{
                 DayContent: ({ date, displayMonth }) => {
-                  if (!isEqual(startOfMonth(date), startOfMonth(displayMonth))) {
-                    return <div className="text-muted-foreground/50">{format(date, 'd')}</div>;
-                  }
-                  return <div>{format(date, 'd')}</div>;
+                  const isCurrentMonth = isEqual(startOfMonth(date), startOfMonth(displayMonth));
+                  const dayNumberFormatted = format(date, 'd');
+                  
+                  const entriesForDay = isCurrentMonth ? timesheetEntries.filter(entry => 
+                    isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
+                  ) : [];
+                  const isDayLogged = entriesForDay.length > 0;
+                  const isDayHoliday = isCurrentMonth && isHoliday(date);
+
+                  return (
+                    <>
+                      <div className={`text-xs font-medium self-start ${!isCurrentMonth ? 'text-muted-foreground/70' : ''}`}>
+                        {dayNumberFormatted}
+                      </div>
+                      {isCurrentMonth && (
+                        <div className="self-stretch space-y-0.5 overflow-hidden text-ellipsis whitespace-nowrap text-left w-full mt-1">
+                          {isDayHoliday && (
+                            <div className="text-[0.65rem] leading-tight flex items-center text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-800/30 px-1 py-0.5 rounded-sm">
+                              <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                              <span className="truncate">Holiday</span>
+                            </div>
+                          )}
+                          {isDayLogged && !isDayHoliday && entriesForDay.slice(0, 2).map(entry => (
+                            <div key={entry.id} className="text-[0.65rem] leading-tight flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm">
+                              <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                              <span className="truncate">{entry.project}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
                 },
               }}
               showOutsideDays

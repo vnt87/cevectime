@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,6 +73,26 @@
     --sidebar-accent-foreground: 231 48% 28%;
     --sidebar-border: 240 50% 25%;
     --sidebar-ring: 231 48% 48%;
+  }
+
+  .bg-diagonal-pattern {
+    background-image: repeating-linear-gradient(
+      45deg,
+      hsl(var(--muted) / 0.2),
+      hsl(var(--muted) / 0.2) 4px,
+      transparent 4px,
+      transparent 8px
+    ) !important;
+  }
+
+  .dark .bg-diagonal-pattern {
+    background-image: repeating-linear-gradient(
+      45deg,
+      hsl(var(--muted) / 0.25), /* Slightly more visible in dark mode */
+      hsl(var(--muted) / 0.25) 4px,
+      transparent 4px,
+      transparent 8px
+    ) !important;
   }
 }
 
