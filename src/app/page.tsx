@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TimesheetForm } from '@/components/timesheet-form';
 import type { TimesheetEntry } from '@/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate } from '@/lib/date-utils';
+import { isWeekend, isHoliday, isPastOrToday, parseDate, formatDate, isDateDisabled } from '@/lib/date-utils';
 import { exportToCSV } from '@/lib/csv-utils';
 import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,8 @@ export default function HomePage() {
   const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [initialModalDate, setInitialModalDate] = useState<Date | undefined>();
 
   const handleSaveTimesheet = (newEntries: TimesheetEntry[]) => {
     const updatedEntries = [...timesheetEntries];
@@ -51,15 +53,27 @@ export default function HomePage() {
   };
 
   const modifiersClassNames = {
-    holiday: '!text-destructive dark:!text-red-400', // Applied to the day cell by react-day-picker
-    weekend: 'bg-diagonal-pattern', // Applied to the day cell
-    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none', // Applied to the day cell
+    holiday: '!text-destructive dark:!text-red-400', 
+    weekend: 'bg-diagonal-pattern', 
+    unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none', 
+  };
+
+  const handleCalendarSelect = (date: Date | undefined) => {
+    setSelectedDate(date); // For visual feedback on calendar
+    if (date && !isDateDisabled(date)) {
+      setInitialModalDate(date);
+      setIsModalOpen(true);
+    } else {
+      // If a disabled date is clicked or selection is cleared,
+      // ensure we don't pass an undefined or old date to the modal if opened by button next.
+      setInitialModalDate(undefined); 
+    }
   };
   
 
   return (
-    <div className="min-h-screen bg-background text-foreground"> {/* Outermost container, no horizontal padding */}
-      <div className="px-4 md:px-8 pt-4 md:pt-8"> {/* Container for header content, with padding */}
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="px-4 md:px-8 pt-4 md:pt-8"> 
         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
           <div className="flex gap-2">
@@ -67,7 +81,7 @@ export default function HomePage() {
               <Download className="mr-2 h-4 w-4" />
               Export CSV
             </Button>
-            <Button onClick={() => setIsModalOpen(true)}>
+            <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Log Timesheet
             </Button>
@@ -75,8 +89,8 @@ export default function HomePage() {
         </header>
       </div>
 
-      <main className="pb-4 md:pb-8"> {/* Main content area, no horizontal padding */}
-        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> {/* Card takes full width of main */}
+      <main className="pb-4 md:pb-8"> 
+        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
@@ -92,16 +106,18 @@ export default function HomePage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0"> {/* CardContent has no padding, allowing Calendar to fill it */}
+          <CardContent className="p-0"> 
             <Calendar
               mode="single"
+              selected={selectedDate}
+              onSelect={handleCalendarSelect}
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               modifiers={modifiers}
               modifiersClassNames={modifiersClassNames}
               className="w-full border-t md:border md:rounded-b-lg" 
               classNames={{
-                month: "space-y-4 w-full", // Ensure the month container is full width
+                month: "space-y-4 w-full",
                 table: "w-full border-collapse",
                 head_row: "flex",
                 head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
@@ -114,7 +130,7 @@ export default function HomePage() {
                   "ring-2 ring-primary ring-inset bg-primary/10 text-primary-foreground dark:text-primary",
                 day_today: "bg-accent/30 text-accent-foreground font-bold",
                 day_outside: "text-muted-foreground opacity-50",
-                day_disabled: "text-muted-foreground opacity-40 line-through",
+                day_disabled: "text-muted-foreground opacity-40 line-through cursor-not-allowed",
               }}
               components={{
                 DayContent: ({ date, displayMonth }) => {
@@ -163,8 +179,8 @@ export default function HomePage() {
         onOpenChange={setIsModalOpen}
         onSave={handleSaveTimesheet}
         existingEntries={timesheetEntries}
+        initialDate={initialModalDate}
       />
     </div>
   );
 }
-

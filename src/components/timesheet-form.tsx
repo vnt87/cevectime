@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from 'react';
@@ -7,19 +8,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CalendarIcon, Loader2, Lightbulb } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
-import { addDays, format, startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import type { TimesheetEntry, ProjectOption } from '@/types';
+import type { TimesheetEntry } from '@/types';
 import { DEFAULT_USER_EMAIL, DEFAULT_LOGGED_TIME, PROJECT_OPTIONS } from '@/config/app-config';
 import { getDatesInRange, isDateDisabled, formatDate } from '@/lib/date-utils';
 import { suggestTomorrowPlan } from '@/ai/flows/suggest-tomorrow-plan';
@@ -29,6 +31,7 @@ interface TimesheetFormProps {
   onOpenChange: (isOpen: boolean) => void;
   onSave: (newEntries: TimesheetEntry[]) => void;
   existingEntries: TimesheetEntry[];
+  initialDate?: Date;
 }
 
 const formSchema = z.object({
@@ -37,33 +40,40 @@ const formSchema = z.object({
     to: z.date().optional(),
   }).refine(data => data.from, { message: "Start date is required." }),
   loggedTime: z.number().min(0.1, "Logged time must be greater than 0").max(24, "Logged time cannot exceed 24 hours"),
-  user: z.string().email("Invalid email address."),
+  user: z.string().min(1, "Username is required.").regex(/^[a-zA-Z0-9._-]+$/, "Invalid username format (e.g., user.name or user-name)"),
   project: z.string().min(1, "Project is required."),
-  todayPlan: z.string().min(1, "Today plan is required."),
-  actualWork: z.string().min(1, "Actual work is required."),
-  issues: z.string().min(1, "Issues are required."),
-  tomorrowPlan: z.string().min(1, "Tomorrow plan is required."),
-  freeComments: z.string().optional(),
+  todayPlan: z.string().min(1, "Today plan is required.").max(400, "Today plan cannot exceed 400 characters."),
+  actualWork: z.string().min(1, "Actual work is required.").max(400, "Actual work cannot exceed 400 characters."),
+  hasIssues: z.enum(['yes', 'no']).default('no'),
+  issues: z.string().max(400, "Issues description cannot exceed 400 characters.").optional(),
+  tomorrowPlan: z.string().min(1, "Tomorrow plan is required.").max(400, "Tomorrow plan cannot exceed 400 characters."),
+  freeComments: z.string().max(400, "Free comments cannot exceed 400 characters.").optional(),
+}).refine(data => {
+  if (data.hasIssues === 'yes') {
+    return data.issues && data.issues.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Issues description is required when 'Yes' is selected.",
+  path: ['issues'],
 });
 
 type TimesheetFormData = z.infer<typeof formSchema>;
 
-export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }: TimesheetFormProps) {
+export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, initialDate }: TimesheetFormProps) {
   const { toast } = useToast();
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: startOfDay(new Date()),
-    to: startOfDay(new Date()),
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   const form = useForm<TimesheetFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       loggedTime: DEFAULT_LOGGED_TIME,
-      user: DEFAULT_USER_EMAIL,
+      user: DEFAULT_USER_EMAIL.split('@')[0],
       project: PROJECT_OPTIONS[0]?.value || '',
       todayPlan: '',
       actualWork: '',
+      hasIssues: 'no',
       issues: '',
       tomorrowPlan: '',
       freeComments: '',
@@ -71,33 +81,43 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
   });
 
   useEffect(() => {
+    if (isOpen) {
+      let effectiveInitialDate = startOfDay(new Date());
+      if (initialDate) {
+        effectiveInitialDate = startOfDay(initialDate);
+      }
+      
+      form.reset({
+        dateRange: { from: effectiveInitialDate, to: effectiveInitialDate },
+        loggedTime: DEFAULT_LOGGED_TIME,
+        user: DEFAULT_USER_EMAIL.split('@')[0],
+        project: PROJECT_OPTIONS[0]?.value || '',
+        todayPlan: '',
+        actualWork: '',
+        hasIssues: 'no',
+        issues: '',
+        tomorrowPlan: '',
+        freeComments: '',
+      });
+      setDateRange({ from: effectiveInitialDate, to: effectiveInitialDate });
+    }
+  }, [isOpen, initialDate, form]);
+
+
+  useEffect(() => {
+    // This effect updates the form's dateRange value when the local dateRange state changes.
     form.setValue('dateRange', { from: dateRange?.from, to: dateRange?.to });
   }, [dateRange, form]);
 
-  useEffect(() => {
-    if(isOpen) {
-        form.reset({
-            dateRange: { from: startOfDay(new Date()), to: startOfDay(new Date())},
-            loggedTime: DEFAULT_LOGGED_TIME,
-            user: DEFAULT_USER_EMAIL,
-            project: PROJECT_OPTIONS[0]?.value || '',
-            todayPlan: '',
-            actualWork: '',
-            issues: '',
-            tomorrowPlan: '',
-            freeComments: '',
-        });
-        setDateRange({ from: startOfDay(new Date()), to: startOfDay(new Date())});
-    }
-  }, [isOpen, form]);
-
 
   const handleSuggestTomorrowPlan = async () => {
-    const { todayPlan, actualWork, issues } = form.getValues();
-    if (!todayPlan || !actualWork || !issues) {
+    const { todayPlan, actualWork, issues, hasIssues } = form.getValues();
+    const issuesToConsider = hasIssues === 'yes' ? issues : 'None';
+
+    if (!todayPlan || !actualWork ) { // issues is optional for suggestion if hasIssues is 'no'
       toast({
         title: "Missing Information",
-        description: "Please fill in 'Today plan', 'Actual work', and 'Issues' to get suggestions.",
+        description: "Please fill in 'Today plan' and 'Actual work' to get suggestions.",
         variant: "destructive",
       });
       return;
@@ -105,7 +125,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
 
     setIsSuggesting(true);
     try {
-      const result = await suggestTomorrowPlan({ todayPlan, actualWork, issues });
+      const result = await suggestTomorrowPlan({ todayPlan, actualWork, issues: issuesToConsider || 'None' });
       form.setValue('tomorrowPlan', result.tomorrowPlanSuggestion);
       toast({
         title: "Suggestion Ready",
@@ -138,15 +158,17 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
       return;
     }
     
+    const finalUserEmail = data.user.includes('@') ? data.user : `${data.user}@sun-asterisk.com`;
+
     const newEntries: TimesheetEntry[] = datesToLog.map(date => ({
       id: `${formatDate(date)}-${data.project}-${Math.random().toString(36).substr(2, 9)}`,
       date: formatDate(date),
       loggedTime: data.loggedTime,
-      user: data.user,
+      user: finalUserEmail,
       project: data.project,
       todayPlan: data.todayPlan,
       actualWork: data.actualWork,
-      issues: data.issues,
+      issues: data.hasIssues === 'yes' ? (data.issues || '') : '',
       tomorrowPlan: data.tomorrowPlan,
       freeComments: data.freeComments,
     }));
@@ -155,6 +177,13 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
     toast({ title: "Success", description: `Logged ${newEntries.length} timesheet(s).` });
     onOpenChange(false);
   };
+
+  const watchedTodayPlan = form.watch('todayPlan');
+  const watchedActualWork = form.watch('actualWork');
+  const watchedIssues = form.watch('issues');
+  const watchedTomorrowPlan = form.watch('tomorrowPlan');
+  const watchedFreeComments = form.watch('freeComments');
+  const watchedHasIssues = form.watch('hasIssues');
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -222,11 +251,12 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
           </div>
 
           <div>
-            <Label htmlFor="user">User</Label>
-            <Input id="user" type="email" className="mt-1" {...form.register('user')} />
+            <Label htmlFor="user">Username</Label>
+            <Input id="user" type="text" className="mt-1" {...form.register('user')} />
             {form.formState.errors.user && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.user.message}</p>
             )}
+             <p className="text-xs text-muted-foreground mt-1">Enter your username (e.g., vu.nam). Domain @sun-asterisk.com will be added.</p>
           </div>
 
           <div>
@@ -256,7 +286,10 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
 
           <div>
             <Label htmlFor="todayPlan">Today Plan</Label>
-            <Textarea id="todayPlan" className="mt-1 min-h-[80px]" {...form.register('todayPlan')} />
+            <Textarea id="todayPlan" className="mt-1 min-h-[80px]" maxLength={400} {...form.register('todayPlan')} />
+            <div className="text-xs text-muted-foreground text-right mt-1">
+              {watchedTodayPlan?.length || 0} / 400
+            </div>
             {form.formState.errors.todayPlan && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.todayPlan.message}</p>
             )}
@@ -264,19 +297,63 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
 
           <div>
             <Label htmlFor="actualWork">Actual Work</Label>
-            <Textarea id="actualWork" className="mt-1 min-h-[80px]" {...form.register('actualWork')} />
+            <Textarea id="actualWork" className="mt-1 min-h-[80px]" maxLength={400} {...form.register('actualWork')} />
+             <div className="text-xs text-muted-foreground text-right mt-1">
+              {watchedActualWork?.length || 0} / 400
+            </div>
             {form.formState.errors.actualWork && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.actualWork.message}</p>
             )}
           </div>
-
+          
           <div>
-            <Label htmlFor="issues">Do you have any issues?</Label>
-            <Textarea id="issues" className="mt-1 min-h-[80px]" {...form.register('issues')} />
-            {form.formState.errors.issues && (
-              <p className="text-sm text-destructive mt-1">{form.formState.errors.issues.message}</p>
-            )}
+            <Label>Do you have any issues?</Label>
+            <Controller
+              name="hasIssues"
+              control={form.control}
+              render={({ field }) => (
+                <RadioGroup
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    if (value === 'no') {
+                      form.setValue('issues', ''); 
+                      form.clearErrors('issues'); 
+                    }
+                  }}
+                  value={field.value}
+                  className="flex space-x-4 mt-1 mb-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="yes" id="hasIssues-yes" />
+                    <Label htmlFor="hasIssues-yes" className="font-normal">Yes</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="hasIssues-no" />
+                    <Label htmlFor="hasIssues-no" className="font-normal">No</Label>
+                  </div>
+                </RadioGroup>
+              )}
+            />
           </div>
+
+          {watchedHasIssues === 'yes' && (
+            <div>
+              <Label htmlFor="issues">Issues Description</Label>
+              <Textarea 
+                id="issues" 
+                className="mt-1 min-h-[80px]" 
+                maxLength={400} 
+                {...form.register('issues')} 
+              />
+              <div className="text-xs text-muted-foreground text-right mt-1">
+                {watchedIssues?.length || 0} / 400
+              </div>
+              {form.formState.errors.issues && (
+                <p className="text-sm text-destructive mt-1">{form.formState.errors.issues.message}</p>
+              )}
+            </div>
+          )}
+
 
           <div>
             <div className="flex justify-between items-center">
@@ -293,7 +370,10 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
                     Suggest
                 </Button>
             </div>
-            <Textarea id="tomorrowPlan" className="mt-1 min-h-[80px]" {...form.register('tomorrowPlan')} />
+            <Textarea id="tomorrowPlan" className="mt-1 min-h-[80px]" maxLength={400} {...form.register('tomorrowPlan')} />
+            <div className="text-xs text-muted-foreground text-right mt-1">
+              {watchedTomorrowPlan?.length || 0} / 400
+            </div>
             {form.formState.errors.tomorrowPlan && (
               <p className="text-sm text-destructive mt-1">{form.formState.errors.tomorrowPlan.message}</p>
             )}
@@ -301,7 +381,13 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries }:
 
           <div>
             <Label htmlFor="freeComments">Free Comments (Optional)</Label>
-            <Textarea id="freeComments" className="mt-1 min-h-[80px]" {...form.register('freeComments')} />
+            <Textarea id="freeComments" className="mt-1 min-h-[80px]" maxLength={400} {...form.register('freeComments')} />
+            <div className="text-xs text-muted-foreground text-right mt-1">
+              {watchedFreeComments?.length || 0} / 400
+            </div>
+             {form.formState.errors.freeComments && (
+              <p className="text-sm text-destructive mt-1">{form.formState.errors.freeComments.message}</p>
+            )}
           </div>
           
           <SheetFooter className="pt-4">
