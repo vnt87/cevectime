@@ -48,20 +48,18 @@ export default function HomePage() {
       !isWeekend(date) && 
       !isHoliday(date) && 
       !loggedDates.some(loggedDate => isEqual(loggedDate, startOfDay(date))),
-    // disabled is implicitly handled by react-day-picker based on its own props like `disabled` dates
   };
 
   const modifiersClassNames = {
-    holiday: '!text-destructive dark:!text-red-400', // Basic style for holiday text color if not overridden by DayContent
+    holiday: '!text-destructive dark:!text-red-400',
     weekend: 'bg-diagonal-pattern',
     unloggedPastOrToday: 'border-l-4 border-destructive/70 !rounded-none',
-    // today styling is handled by classNames.day_today
   };
   
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="px-4 md:px-8 pt-4 md:pt-8">
+    <div className="min-h-screen bg-background text-foreground"> {/* Outermost container, no horizontal padding */}
+      <div className="px-4 md:px-8 pt-4 md:pt-8"> {/* Container for header content, with padding */}
         <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
           <div className="flex gap-2">
@@ -77,8 +75,8 @@ export default function HomePage() {
         </header>
       </div>
 
-      <main className="pb-4 md:pb-8">
-        <Card className="shadow-lg w-full rounded-none md:rounded-lg">
+      <main className="pb-4 md:pb-8"> {/* Main content area, no horizontal padding */}
+        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> {/* Card takes full width of main */}
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
               {format(currentMonth, 'MMMM yyyy')}
@@ -94,9 +92,9 @@ export default function HomePage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0"> {/* CardContent has no padding, allowing Calendar to fill it */}
             <Calendar
-              mode="single" // Keeps single date selection behavior
+              mode="single"
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               modifiers={modifiers}
