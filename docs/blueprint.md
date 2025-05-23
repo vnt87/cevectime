@@ -1,4 +1,4 @@
-# **App Name**: TimeSage
+# **App Name**: CEVEC TimeLord
 
 ## Core Features:
 

@@ -201,8 +201,8 @@ export default function HomePage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isClient ? workingDaysThisMonth : "0"}</div>
-              <p className="text-xs text-muted-foreground">in {format(currentMonth, 'MMMM')}</p>
+              <div className="text-5xl font-bold">{isClient ? workingDaysThisMonth : "0"}</div>
+              <p className="text-sm text-muted-foreground">in {format(currentMonth, 'MMMM')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -211,8 +211,8 @@ export default function HomePage() {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isClient ? loggedDaysThisMonthCount : "0"}</div>
-               <p className="text-xs text-muted-foreground">out of {isClient ? workingDaysThisMonth : "0"} working days</p>
+              <div className="text-5xl font-bold">{isClient ? loggedDaysThisMonthCount : "0"}</div>
+               <p className="text-sm text-muted-foreground">out of {isClient ? workingDaysThisMonth : "0"} working days</p>
             </CardContent>
           </Card>
           <Card>
@@ -221,8 +221,8 @@ export default function HomePage() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isClient ? daysToLogCount : "0"}</div>
-              <p className="text-xs text-muted-foreground">past workdays</p>
+              <div className="text-5xl font-bold">{isClient ? daysToLogCount : "0"}</div>
+              <p className="text-sm text-muted-foreground">past workdays</p>
             </CardContent>
           </Card>
         </div>
