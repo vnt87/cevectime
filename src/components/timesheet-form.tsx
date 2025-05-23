@@ -25,12 +25,12 @@ import type { TimesheetEntry, NagerDateHoliday } from '@/types';
 import { DEFAULT_USER_EMAIL, DEFAULT_LOGGED_TIME, PROJECT_OPTIONS } from '@/config/app-config';
 import { getDatesInRange, isDateDisabled, formatDate } from '@/lib/date-utils';
 import { suggestTomorrowPlan } from '@/ai/flows/suggest-tomorrow-plan';
+import { saveTimesheetEntries } from '@/app/api/timesheet/service';
 
 interface TimesheetFormProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSave: (newEntries: TimesheetEntry[]) => void;
-  existingEntries: TimesheetEntry[];
+  onSuccess: () => void;
   initialDate?: Date;
   vietnamHolidays: NagerDateHoliday[];
 }
@@ -61,7 +61,7 @@ const formSchema = z.object({
 
 type TimesheetFormData = z.infer<typeof formSchema>;
 
-export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, initialDate, vietnamHolidays }: TimesheetFormProps) {
+export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vietnamHolidays }: TimesheetFormProps) {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -163,7 +163,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
     }
   };
 
-  const onSubmit = (data: TimesheetFormData) => {
+  const onSubmit = async (data: TimesheetFormData) => {
     if (!data.dateRange.from) {
       toast({ title: "Error", description: "Please select a date.", variant: "destructive" });
       return;
@@ -180,22 +180,36 @@ export function TimesheetForm({ isOpen, onOpenChange, onSave, existingEntries, i
 
     const finalUserEmail = data.user.includes('@') ? data.user : `${data.user}@sun-asterisk.com`;
 
-    const newEntries: TimesheetEntry[] = datesToLog.map(date => ({
-      id: `${formatDate(date)}-${data.project}-${Math.random().toString(36).substr(2, 9)}`,
-      date: formatDate(date),
-      loggedTime: data.loggedTime,
-      user: finalUserEmail,
-      project: data.project,
-      todayPlan: data.todayPlan,
-      actualWork: data.actualWork,
-      issues: data.hasIssues === 'yes' ? (data.issues || '') : '',
-      tomorrowPlan: data.tomorrowPlan,
-      freeComments: data.freeComments,
-    }));
+    try {
+      const newEntries: Partial<TimesheetEntry>[] = datesToLog.map(date => ({
+        date: formatDate(date),
+        loggedTime: data.loggedTime,
+        user: finalUserEmail,
+        project: data.project,
+        todayPlan: data.todayPlan,
+        actualWork: data.actualWork,
+        issues: data.hasIssues === 'yes' ? (data.issues || '') : '',
+        tomorrowPlan: data.tomorrowPlan,
+        freeComments: data.freeComments,
+      }));
 
-    onSave(newEntries);
-    toast({ title: "Success", description: `Logged ${newEntries.length} timesheet(s).` });
-    onOpenChange(false);
+      const response = await saveTimesheetEntries(newEntries);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to save timesheet entries');
+      }
+
+      toast({ title: "Success", description: `Logged ${newEntries.length} timesheet(s).` });
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving timesheet entries:', error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : 'Failed to save timesheet entries',
+        variant: "destructive"
+      });
+    }
   };
 
   const localIsDateDisabled = (date: Date) => isDateDisabled(date, vietnamHolidays);

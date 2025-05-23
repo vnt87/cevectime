@@ -5,6 +5,7 @@ import type * as React from 'react';
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Download, PlusCircle, Gift, CalendarCheck2, Briefcase, Activity, AlertTriangle } from 'lucide-react';
 import { format, startOfMonth, addMonths, subMonths, isEqual, endOfMonth, eachDayOfInterval, isSameMonth, getYear, startOfDay } from 'date-fns';
+import { DEFAULT_USER_EMAIL } from '@/config/app-config';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -21,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function HomePage() {
-  const [timesheetEntries, setTimesheetEntries] = useLocalStorage<TimesheetEntry[]>('timesheetEntries', []);
+  const [timesheetEntries, setTimesheetEntries] = useState<TimesheetEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -72,17 +73,31 @@ export default function HomePage() {
   }, [currentMonth, holidaysByYear, toast, isClient]);
 
 
-  const handleSaveTimesheet = (newEntries: TimesheetEntry[]) => {
-    const updatedEntries = [...timesheetEntries];
-    newEntries.forEach(newEntry => {
-      const existingIndex = updatedEntries.findIndex(e => e.date === newEntry.date && e.project === newEntry.project);
-      if (existingIndex > -1) {
-        updatedEntries[existingIndex] = newEntry;
-      } else {
-        updatedEntries.push(newEntry);
+  const refreshTimesheetEntries = async () => {
+    try {
+      const response = await fetch(`/api/timesheet?user=${encodeURIComponent(DEFAULT_USER_EMAIL)}`);
+      const data = await response.json();
+      if (data.success && data.entries) {
+        setTimesheetEntries(data.entries);
       }
-    });
-    setTimesheetEntries(updatedEntries.sort((a,b) => parseDate(a.date).getTime() - parseDate(b.date).getTime()));
+    } catch (error) {
+      console.error('Error fetching timesheet entries:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch timesheet entries',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isClient) {
+      refreshTimesheetEntries();
+    }
+  }, [isClient]);
+
+  const handleSuccess = () => {
+    refreshTimesheetEntries();
   };
 
   const loggedDates = useMemo(() => 
@@ -339,8 +354,7 @@ export default function HomePage() {
       <TimesheetForm
         isOpen={isModalOpen}
         onOpenChange={setIsModalOpen}
-        onSave={handleSaveTimesheet}
-        existingEntries={timesheetEntries}
+        onSuccess={handleSuccess}
         initialDate={initialModalDate}
         vietnamHolidays={vietnamHolidays}
       />

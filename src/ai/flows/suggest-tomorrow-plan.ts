@@ -39,13 +39,13 @@ const suggestTomorrowPlanPrompt = ai.definePrompt({
   name: 'suggestTomorrowPlanPrompt',
   input: {schema: SuggestTomorrowPlanInputSchema},
   output: {schema: SuggestTomorrowPlanOutputSchema},
-  prompt: `Based on the following information from the user's timesheet, suggest what they should include in their plan for tomorrow. Focus on suggesting concrete next steps and addressing any potential gaps or unresolved issues.
+  prompt: `Based on the following information from the user's timesheet, suggest what they should include in their plan for tomorrow focusing specifically on UI design tasks. Keep the response under 400 characters and concentrate on concrete UI/UX related tasks, design improvements, and visual enhancements.
 
 Today's Plan: {{{todayPlan}}}
 Actual Work: {{{actualWork}}}
 Issues: {{{issues}}}
 
-Tomorrow's Plan Suggestion:`, // Keep it simple and direct; the LLM will add the creativity and details.
+Tomorrow's Plan Suggestion:`, // Constrained to UI design tasks and 400 char limit
 });
 
 const suggestTomorrowPlanFlow = ai.defineFlow(

@@ -1,6 +1,6 @@
 import type { TimesheetEntry } from '@/types';
 
-export function exportToCSV(entries: TimesheetEntry[], filename: string = 'timesheet_export.csv'): void {
+export function exportToCSV(entries: TimesheetEntry[]): void {
   if (!entries.length) {
     alert('No data to export.');
     return;
@@ -17,12 +17,12 @@ export function exportToCSV(entries: TimesheetEntry[], filename: string = 'times
     ...entries.map(entry => [
       entry.date,
       entry.loggedTime,
-      `"${entry.user.replace(/"/g, '""')}"`,
-      `"${entry.project.replace(/"/g, '""')}"`,
-      `"${entry.todayPlan.replace(/"/g, '""')}"`,
-      `"${entry.actualWork.replace(/"/g, '""')}"`,
-      `"${entry.issues.replace(/"/g, '""')}"`,
-      `"${entry.tomorrowPlan.replace(/"/g, '""')}"`,
+      `"${(entry.user || '').replace(/"/g, '""')}"`,
+      `"${(entry.project || '').replace(/"/g, '""')}"`,
+      `"${(entry.todayPlan || '').replace(/"/g, '""')}"`,
+      `"${(entry.actualWork || '').replace(/"/g, '""')}"`,
+      `"${(entry.issues || '').replace(/"/g, '""')}"`,
+      `"${(entry.tomorrowPlan || '').replace(/"/g, '""')}"`,
       `"${(entry.freeComments || '').replace(/"/g, '""')}"`,
     ].join(','))
   ];
@@ -33,6 +33,14 @@ export function exportToCSV(entries: TimesheetEntry[], filename: string = 'times
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
+    const now = new Date();
+    const dateStr = now.getFullYear() +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') + '_' +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0') +
+      String(now.getSeconds()).padStart(2, '0');
+    const filename = `cevectime_${dateStr}_timesheet.csv`;
     link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);

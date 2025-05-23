@@ -9,7 +9,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate": "tsx src/db/migrator.ts",
+    "postinstall": "npm run migrate",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:generate-types": "kysely-codegen --out-file=src/db/types/database.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
@@ -37,16 +41,21 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tanstack-query-firebase/react": "^1.0.5",
     "@tanstack/react-query": "^5.66.0",
+    "@types/pg": "^8.15.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
+    "dotenv-safe": "^9.1.0",
     "firebase": "^11.7.3",
     "genkit": "^1.8.0",
+    "kysely": "^0.28.2",
+    "kysely-codegen": "^0.18.5",
     "lucide-react": "^0.475.0",
     "next": "15.2.3",
     "next-themes": "^0.3.0",
     "patch-package": "^8.0.0",
+    "pg": "^8.16.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -63,6 +72,7 @@
     "genkit-cli": "^1.8.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   }
 }
