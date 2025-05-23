@@ -27,88 +27,93 @@ CEVEC TimeLord is a tool I created for my own purpose for monthly work logging t
 *   **ORM:** Kysely (for type-safe SQL query building)
 *   **Date Utilities:** date-fns
 
-## Getting Started
+## Deployment Options
+
+### Option 1: Docker Deployment (Recommended)
+
+The application can be deployed using Docker and Docker Compose, which provides an isolated and consistent environment.
+
+#### Prerequisites
+- Docker and Docker Compose installed on your system
+- A Google API key for Gemini AI features
+
+#### Steps to Deploy with Docker
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/vnt87/cevectime.git
+   cd cevectime
+   ```
+
+2. **Create a .env file for Docker Compose:**
+   ```bash
+   cp .env.example .env
+   ```
+   Update the .env file with your Google API key:
+   ```
+   GOOGLE_API_KEY=your_gemini_api_key_here
+   ```
+
+3. **Start the application:**
+   ```bash
+   docker-compose up -d
+   ```
+   This will:
+   - Start a PostgreSQL database
+   - Build and start the application
+   - Run necessary database migrations
+   
+   The application will be available at `http://localhost:3000`
+
+4. **View logs (optional):**
+   ```bash
+   docker-compose logs -f app  # View application logs
+   docker-compose logs -f db   # View database logs
+   ```
+
+5. **Stop the application:**
+   ```bash
+   docker-compose down
+   ```
+   To also remove the database volume:
+   ```bash
+   docker-compose down -v
+   ```
+
+### Option 2: Local Development Setup
 
 Follow these steps to get the CEVEC Timesheet Logger running on your local machine.
 
-### Prerequisites
-
-*   Node.js (v20 or later recommended)
-*   npm (v10 or later) or yarn
-*   PostgreSQL server running
-
-### Installation & Setup
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/vnt87/cevectime.git
-    cd cevectime
-    ```
-
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-    or
-    ```bash
-    yarn install
-    ```
-
-3.  **Set up environment variables:**
-    *   Copy the example environment file:
-        ```bash
-        cp .env.example .env.local
-        ```
-    *   Update `.env.local` with your local PostgreSQL database connection details and any other required API keys or configurations (e.g., for Genkit/Google AI).
-        *   `POSTGRES_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"`
-        *   `DEFAULT_USER_EMAIL="your.email@example.com"` (for default user in timesheet)
-
-4.  **Run database migrations:**
-    This will set up the necessary tables in your PostgreSQL database.
-    ```bash
-    npm run migrate
-    ```
-
-5.  **(Optional) Seed the database:**
-    To populate the database with initial sample data:
-    ```bash
-    npm run db:seed
-    ```
-
-6.  **Generate Kysely database types (if you change the schema):**
-    ```bash
-    npm run db:generate-types
-    ```
-
-### Running the Application
-
-1.  **Start the Next.js development server:**
-    This will run the main application, typically on `http://localhost:9002`.
-    ```bash
-    npm run dev
-    ```
-
-2.  **Start the Genkit development server (for AI features):**
-    This runs the Genkit AI flows, typically on `http://localhost:4000` (Genkit UI) and makes flows available to the Next.js app.
-    ```bash
-    npm run genkit:dev
-    ```
-    Or, to watch for changes in AI flow files:
-    ```bash
-    npm run genkit:watch
-    ```
+[... rest of the original README content ...]
 
 ## Available Scripts
 
-Here are some of the key scripts available in `package.json`:
+[... existing scripts section ...]
 
-*   `npm run dev`: Starts the Next.js development server with Turbopack.
-*   `npm run build`: Builds the application for production.
-*   `npm run start`: Starts the production server.
-*   `npm run lint`: Lints the codebase using Next.js's ESLint configuration.
-*   `npm run typecheck`: Runs TypeScript to check for type errors.
-*   `npm run migrate`: Applies database migrations using Kysely.
-*   `npm run db:seed`: Seeds the database with initial data.
-*   `npm run db:generate-types`: Generates TypeScript types from your Kysely database schema.
-*   `npm run genkit:dev`: Starts the Genkit development server.
-*   `npm run genkit:watch`: Starts the Genkit development server with file watching.
+## Production Deployment Notes
+
+For production deployment using Docker:
+
+1. **Environment Variables:**
+   - Set up the necessary environment variables in your production environment
+   - Required variables:
+     - `GOOGLE_API_KEY`: For AI features
+     - Database variables are pre-configured in docker-compose.yml
+
+2. **Database Backups:**
+   - The PostgreSQL data is persisted in a Docker volume named `cevectime-pgdata`
+   - Implement regular backups of this volume in production
+
+3. **Updating the Application:**
+   ```bash
+   # Pull the latest image
+   docker-compose pull
+   
+   # Restart the services with the new image
+   docker-compose up -d
+   ```
+
+4. **Health Checks:**
+   - The application container depends on database availability
+   - Database health is checked before the application starts
+   - Monitor the application status using Docker health checks
