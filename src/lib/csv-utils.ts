@@ -6,24 +6,53 @@ export function exportToCSV(entries: TimesheetEntry[]): void {
     return;
   }
 
-  const headers = [
-    "Date", "Logged Time", "User", "Project", 
-    "Today plan", "Actual work", "Issues", 
-    "Tomorrow Plan", "Free comments"
-  ];
+  const headers = ["Date", "Logged Time", "Report", "User", "Project"];
+
+  function sanitizeForCSV(text: string): string {
+    // Keep alphanumeric chars, spaces, newlines, and common punctuation
+    return (text || '')
+      .replace(/[^\w\s\n\r.,!?()-]/g, '') // Keep letters, numbers, spaces, newlines, and basic punctuation
+      .trim();
+  }
+
+  function formatDate(isoDate: string): string {
+    const [year, month, day] = isoDate.split('-');
+    return `${parseInt(day)}/${parseInt(month)}/${year}`;
+  }
+
+  function formatReport(entry: TimesheetEntry): string {
+    const report = [
+      '- Today plan',
+      sanitizeForCSV(entry.todayPlan || ''),
+      '',
+      '- Actual work',
+      sanitizeForCSV(entry.actualWork || ''),
+      '',
+      '- Do you have any issues?',
+      sanitizeForCSV(entry.issues || ''),
+      '',
+      '- Tomorrow plan',
+      sanitizeForCSV(entry.tomorrowPlan || ''),
+      '',
+      '- Free comment',
+      sanitizeForCSV(entry.freeComments || ''),
+      ''
+    ].join('\n');
+
+    return report.replace(/"/g, '""');
+  }
+
+  // Sort entries by date (ascending)
+  const sortedEntries = [...entries].sort((a, b) => a.date.localeCompare(b.date));
 
   const csvRows = [
     headers.join(','),
-    ...entries.map(entry => [
-      entry.date,
+    ...sortedEntries.map(entry => [
+      formatDate(entry.date),
       entry.loggedTime,
-      `"${(entry.user || '').replace(/"/g, '""')}"`,
-      `"${(entry.project || '').replace(/"/g, '""')}"`,
-      `"${(entry.todayPlan || '').replace(/"/g, '""')}"`,
-      `"${(entry.actualWork || '').replace(/"/g, '""')}"`,
-      `"${(entry.issues || '').replace(/"/g, '""')}"`,
-      `"${(entry.tomorrowPlan || '').replace(/"/g, '""')}"`,
-      `"${(entry.freeComments || '').replace(/"/g, '""')}"`,
+      `"${formatReport(entry)}"`,
+      `"${sanitizeForCSV(entry.user || '').replace(/"/g, '""')}"`,
+      `"${sanitizeForCSV(entry.project || '').replace(/"/g, '""')}"`,
     ].join(','))
   ];
 
