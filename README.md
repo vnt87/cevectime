@@ -1,6 +1,6 @@
-# CEVEC Timesheet Logger
+# CEVEC TimeLord
 
-CEVEC Timesheet Logger is a modern, feature-rich web application designed to help users efficiently track their daily work, manage tasks, and plan for upcoming activities. It integrates AI-powered suggestions to assist with planning and provides a clear overview of logged time and holidays.
+CEVEC TimeLord is a tool I created for my own purpose for monthly work logging time with Sun* CEVEC. This was totally not made out of frustration with the current implementation (Slack form + Google Sheet), but also a study project for me to learn how to create structured schemas, integration with external db (NeonDB) and ORM (Kesely), external public API (nager.date) for fetching list of public holidays, CSV export with sanitization, AI integration (using Firebase Genkit)
 
 ![CEVEC Timesheet Logger Screenshot](assets/screenshot.png)
 
