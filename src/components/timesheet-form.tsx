@@ -460,7 +460,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vi
             )}
           </div>
 
-          <SheetFooter className="pt-4">
+          <SheetFooter className="pt-4 gap-2">
             <SheetClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </SheetClose>

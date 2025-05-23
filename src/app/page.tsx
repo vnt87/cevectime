@@ -255,23 +255,19 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto">
               <Button 
                 onClick={() => exportToCSV(timesheetEntries)} 
                 variant="outline"
-                size="icon"
-                className="md:w-auto md:px-4"
               >
-                <Download className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Export CSV</span>
+                <Download className="h-4 w-4 mr-2" />
+                <span>Export CSV</span>
               </Button>
               <Button 
                 onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}
-                size="icon"
-                className="md:w-auto md:px-4"
               >
-                <PlusCircle className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Log Timesheet</span>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                <span>Log Timesheet</span>
               </Button>
             </div>
           </CardHeader>
