@@ -144,6 +144,9 @@ export default function HomePage() {
   const handleCalendarSelect = (date: Date | undefined) => {
     setSelectedDate(date); 
     if (date && !isDateDisabled(date, vietnamHolidays)) {
+      const existingEntry = timesheetEntries.find(entry => 
+        isEqual(startOfDay(parseDate(entry.date)), startOfDay(date))
+      );
       setInitialModalDate(date);
       setIsModalOpen(true);
     } else {
@@ -357,6 +360,9 @@ export default function HomePage() {
         onSuccess={handleSuccess}
         initialDate={initialModalDate}
         vietnamHolidays={vietnamHolidays}
+        initialEntryData={selectedDate ? timesheetEntries.find(entry => 
+          isEqual(startOfDay(parseDate(entry.date)), startOfDay(selectedDate))
+        ) : undefined}
       />
     </div>
   );

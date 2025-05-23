@@ -33,6 +33,7 @@ interface TimesheetFormProps {
   onSuccess: () => void;
   initialDate?: Date;
   vietnamHolidays: NagerDateHoliday[];
+  initialEntryData?: TimesheetEntry;
 }
 
 const formSchema = z.object({
@@ -61,7 +62,7 @@ const formSchema = z.object({
 
 type TimesheetFormData = z.infer<typeof formSchema>;
 
-export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vietnamHolidays }: TimesheetFormProps) {
+export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vietnamHolidays, initialEntryData }: TimesheetFormProps) {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -92,18 +93,35 @@ export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vi
          toast({ title: "Notice", description: "Selected date is a non-working day. Please pick a valid date.", variant: "default" });
       }
 
-      form.reset({
-        dateRange: { from: effectiveInitialDate, to: effectiveInitialDate },
-        loggedTime: DEFAULT_LOGGED_TIME,
-        user: DEFAULT_USER_EMAIL.split('@')[0],
-        project: PROJECT_OPTIONS[0]?.value || '',
-        todayPlan: '',
-        actualWork: '',
-        hasIssues: 'no',
-        issues: '',
-        tomorrowPlan: '',
-        freeComments: '',
-      });
+      if (initialEntryData) {
+        const entryDate = startOfDay(new Date(initialEntryData.date));
+        form.reset({
+          dateRange: { from: entryDate, to: entryDate },
+          loggedTime: initialEntryData.loggedTime,
+          user: initialEntryData.user.split('@')[0],
+          project: initialEntryData.project,
+          todayPlan: initialEntryData.todayPlan,
+          actualWork: initialEntryData.actualWork,
+          hasIssues: initialEntryData.issues ? 'yes' : 'no',
+          issues: initialEntryData.issues || '',
+          tomorrowPlan: initialEntryData.tomorrowPlan,
+          freeComments: initialEntryData.freeComments || '',
+        });
+        setActualWorkManuallyEdited(true); // Prevent auto-sync with todayPlan for existing entries
+      } else {
+        form.reset({
+          dateRange: { from: effectiveInitialDate, to: effectiveInitialDate },
+          loggedTime: DEFAULT_LOGGED_TIME,
+          user: DEFAULT_USER_EMAIL.split('@')[0],
+          project: PROJECT_OPTIONS[0]?.value || '',
+          todayPlan: '',
+          actualWork: '',
+          hasIssues: 'no',
+          issues: '',
+          tomorrowPlan: '',
+          freeComments: '',
+        });
+      }
       setDateRange({ from: effectiveInitialDate, to: effectiveInitialDate });
       setActualWorkManuallyEdited(false); // Reset flag when form opens/resets
     }
