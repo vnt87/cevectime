@@ -2,6 +2,9 @@ import type { Config } from "tailwindcss";
 
 export default {
     darkMode: ["class"],
+    safelist: [
+      'lg:mr-[30rem]'  // Safelist the dynamic margin class for the sheet drawer
+    ],
     content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

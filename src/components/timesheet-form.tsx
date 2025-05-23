@@ -234,7 +234,10 @@ export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vi
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto p-4 pr-6">
+      <SheetContent 
+        className="sm:max-w-lg w-[90vw] overflow-y-auto p-4 pr-6 lg:w-[30rem] lg:max-w-[30rem] lg:border-l"
+        overlayClassName="lg:hidden"
+      >
         <SheetHeader className="mb-4">
           <SheetTitle>Log Timesheet</SheetTitle>
         </SheetHeader>

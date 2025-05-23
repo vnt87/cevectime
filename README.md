@@ -2,6 +2,8 @@
 
 CEVEC Timesheet Logger is a modern, feature-rich web application designed to help users efficiently track their daily work, manage tasks, and plan for upcoming activities. It integrates AI-powered suggestions to assist with planning and provides a clear overview of logged time and holidays.
 
+![CEVEC Timesheet Logger Screenshot](assets/screenshot.png)
+
 ## Key Features
 
 *   **Comprehensive Daily Logging:** Log your daily tasks including what you planned, what you actually accomplished, any issues encountered, and your plan for the next day.

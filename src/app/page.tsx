@@ -22,6 +22,9 @@ import { useToast } from '@/hooks/use-toast';
 
 
 export default function HomePage() {
+  // Define sheet width for desktop, matching the width in TimesheetForm
+  const SHEET_DESKTOP_WIDTH = "30rem";
+  
   const [timesheetEntries, setTimesheetEntries] = useState<TimesheetEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
@@ -189,7 +192,13 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="px-4 md:px-8 pt-4 md:pt-8"> 
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out", // For smooth animation
+          isModalOpen && "lg:mr-[30rem]" // Apply margin when modal is open
+        )}
+      >
+        <div className="px-4 md:px-8 pt-4 md:pt-8">
         <header className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <Logo />
           <ThemeToggleButton />
@@ -236,9 +245,9 @@ export default function HomePage() {
               Log Timesheet
             </Button>
         </div>
-      </div>
+        </div>
 
-      <main className="pb-4 md:pb-8 px-4 md:px-8"> 
+        <main className="pb-4 md:pb-8 px-4 md:px-8">
         <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
             <CardTitle className="text-xl font-medium">
@@ -352,7 +361,8 @@ export default function HomePage() {
             )}
           </CardContent>
         </Card>
-      </main>
+        </main>
+      </div>
 
       <TimesheetForm
         isOpen={isModalOpen}
