@@ -10,9 +10,15 @@ export function exportToCSV(entries: TimesheetEntry[]): void {
 
   function sanitizeForCSV(text: string): string {
     // Keep alphanumeric chars, spaces, newlines, and common punctuation
-    return (text || '')
+    let sanitizedText = (text || '')
       .replace(/[^\w\s\n\r.,!?()-]/g, '') // Keep letters, numbers, spaces, newlines, and basic punctuation
       .trim();
+
+    // Prevent spreadsheet software from interpreting text as formulas
+    if (sanitizedText.length > 0 && ['=', '+', '-', '@'].includes(sanitizedText[0])) {
+      sanitizedText = "'" + sanitizedText;
+    }
+    return sanitizedText;
   }
 
   function formatDate(isoDate: string): string {
