@@ -235,13 +235,14 @@ export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vi
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent 
-        className="sm:max-w-lg w-[90vw] overflow-y-auto p-4 pr-6 lg:w-[30rem] lg:max-w-[30rem] lg:border-l"
+        className="w-full sm:max-w-lg overflow-y-auto px-2 py-4 sm:p-4 lg:w-[30rem] lg:max-w-[30rem] lg:border-l"
         overlayClassName="lg:hidden"
+        side="right"
       >
         <SheetHeader className="mb-4">
           <SheetTitle>Log Timesheet</SheetTitle>
         </SheetHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full overflow-x-hidden">
           <div>
             <Label htmlFor="dateRange">Date Range</Label>
             <Popover>
@@ -269,7 +270,7 @@ export function TimesheetForm({ isOpen, onOpenChange, onSuccess, initialDate, vi
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)]" align="start">
                 <Calendar
                   initialFocus
                   mode="range"

@@ -203,45 +203,45 @@ export default function HomePage() {
           <Logo />
           <ThemeToggleButton />
         </header>
-         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+         <div className="flex overflow-x-auto pb-4 gap-4 mb-6 sm:grid sm:grid-cols-3 sm:pb-0 no-scrollbar">
+          <Card className="flex-shrink-0 min-w-[250px] sm:min-w-0 sm:w-auto">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-4">
               <CardTitle className="text-sm font-medium">Working Days</CardTitle>
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-5xl font-bold">{isClient ? workingDaysThisMonth : "0"}</div>
+            <CardContent className="px-3 sm:px-4">
+              <div className="text-4xl sm:text-5xl font-bold">{isClient ? workingDaysThisMonth : "0"}</div>
               <p className="text-sm text-muted-foreground">in {format(currentMonth, 'MMMM')}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card className="flex-shrink-0 min-w-[250px] sm:min-w-0 sm:w-auto">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-4">
               <CardTitle className="text-sm font-medium">Logged Days</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-5xl font-bold">{isClient ? loggedDaysThisMonthCount : "0"}</div>
+            <CardContent className="px-3 sm:px-4">
+              <div className="text-4xl sm:text-5xl font-bold">{isClient ? loggedDaysThisMonthCount : "0"}</div>
                <p className="text-sm text-muted-foreground">out of {isClient ? workingDaysThisMonth : "0"} working days</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card className="flex-shrink-0 min-w-[250px] sm:min-w-0 sm:w-auto">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 sm:px-4">
               <CardTitle className="text-sm font-medium">Needs Logging</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-5xl font-bold">{isClient ? daysToLogCount : "0"}</div>
+            <CardContent className="px-3 sm:px-4">
+              <div className="text-4xl sm:text-5xl font-bold">{isClient ? daysToLogCount : "0"}</div>
               <p className="text-sm text-muted-foreground">past workdays</p>
             </CardContent>
           </Card>
         </div>
         </div>
 
-        <main className="pb-4 md:pb-8 px-4 md:px-8">
-        <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
+        <main className="pb-4 md:pb-8 px-2 sm:px-4 md:px-8">
+        <Card className="shadow-lg w-full rounded-none md:rounded-lg overflow-hidden"> 
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0 pb-2 px-2 sm:px-4 md:px-6 pt-4 md:pt-6">
             <div className="flex items-center gap-4">
-              <CardTitle className="text-xl font-medium">
+              <CardTitle className="text-lg sm:text-xl font-medium">
                 {format(currentMonth, 'MMMM yyyy')}
               </CardTitle>
               <div className="flex items-center gap-2">
@@ -256,17 +256,26 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export CSV
+              <Button 
+                onClick={() => exportToCSV(timesheetEntries)} 
+                variant="outline"
+                size="icon"
+                className="md:w-auto md:px-4"
+              >
+                <Download className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Export CSV</span>
               </Button>
-              <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Log Timesheet
+              <Button 
+                onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}
+                size="icon"
+                className="md:w-auto md:px-4"
+              >
+                <PlusCircle className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Log Timesheet</span>
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="px-1 sm:px-0">
             {isClient ? (
               <Calendar
                 mode="single"
@@ -281,11 +290,11 @@ export default function HomePage() {
                   month: "space-y-4 w-full",
                   table: "w-full border-collapse",
                   head_row: "flex",
-                  head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.8rem] py-2 text-center border-b",
+                  head_cell: "text-muted-foreground flex-1 basis-0 font-normal text-[0.7rem] sm:text-[0.8rem] py-2 text-center border-b",
                   row: "flex w-full border-t",
-                  cell: "h-28 flex-1 basis-0 text-sm p-0 relative box-border border-l first:border-l-0 md:border-r-0 last:border-r-0",
+                  cell: "min-h-[4.5rem] sm:h-28 flex-1 basis-0 text-[0.7rem] sm:text-sm p-0 relative box-border border-l first:border-l-0 md:border-r-0 last:border-r-0 overflow-hidden",
                   day: cn(
-                    "h-full w-full p-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
+                    "h-full w-full px-0.5 py-1 focus:relative focus:z-10 flex flex-col justify-between items-start text-left"
                   ),
                   day_selected: 
                     "ring-2 ring-primary ring-inset bg-primary/10 text-primary-foreground dark:text-primary",
@@ -329,16 +338,16 @@ export default function HomePage() {
                         </div>
 
                         {isClient && isCurrentMonthDay && (
-                          <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.65rem] leading-tight mt-1">
+              <div className="flex flex-col justify-end flex-grow w-full text-center items-center text-[0.55rem] sm:text-[0.65rem] leading-tight mt-0.5">
                             {isDayHoliday ? (
-                              <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-1 py-0.5 rounded-sm w-full justify-center">
-                                <Gift className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                              <div className="flex items-center text-destructive dark:text-red-400 bg-red-100/50 dark:bg-red-900/30 px-0.5 py-0.5 rounded-sm w-full justify-center">
+                                <Gift className="mr-0.5 h-2 w-2 flex-shrink-0" />
                                 <span className="truncate">{holidayInfo?.localName || 'Holiday'}</span>
                               </div>
                             ) : isDayLogged ? (
                               entriesForDay.slice(0, 1).map(entry => ( 
-                                <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-1 py-0.5 rounded-sm w-full justify-center">
-                                  <CalendarCheck2 className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                                <div key={entry.id} className="flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-800/30 px-0.5 py-0.5 rounded-sm w-full justify-center">
+                                  <CalendarCheck2 className="mr-0.5 h-2 w-2 flex-shrink-0" />
                                   <span className="truncate">{entry.project}</span>
                                 </div>
                               ))

@@ -13,7 +13,7 @@ const baiJamjuree = Bai_Jamjuree({ // Changed font
 });
 
 export const metadata: Metadata = {
-  title: 'CEVEC TimeLord',
+  title: 'CEVEC Timesheet Manager',
   description: 'Timesheet Web App by Firebase Studio',
 };
 
