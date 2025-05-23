@@ -1,6 +1,6 @@
 # CEVEC TimeLord
 
-CEVEC TimeLord is a tool I created for my own purpose for monthly work logging time with Sun* CEVEC. This was totally not made out of frustration with the current implementation (Slack form + Google Sheet), but also a study project for me to learn how to create structured schemas, integration with external db (NeonDB) and ORM (Kesely), external public API (nager.date) for fetching list of public holidays, CSV export with sanitization, AI integration (using Firebase Genkit)
+CEVEC TimeLord is a tool I created for my own purpose for monthly work logging time with Sun* CEVEC. This was totally not made out of frustration with the current implementation (Slack form + Google Sheet), but also a study project for me to learn how to create structured schemas, integration with external db (`NeonDB`) and ORM (`Kesely`), external public API (`nager.date`) for fetching list of public holidays, CSV export with sanitization, AI integration (using `Firebase Genkit`)
 
 ![CEVEC Timesheet Logger Screenshot](assets/screenshot.png)
 
@@ -41,10 +41,9 @@ Follow these steps to get the CEVEC Timesheet Logger running on your local machi
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd cevec-timesheet-logger 
+    git clone https://github.com/vnt87/cevectime.git
+    cd cevectime
     ```
-    *(Replace `<repository-url>` with the actual URL of this repository)*
 
 2.  **Install dependencies:**
     ```bash
