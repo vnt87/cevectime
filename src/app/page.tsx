@@ -235,32 +235,34 @@ export default function HomePage() {
             </CardContent>
           </Card>
         </div>
-        <div className="mb-6 flex flex-col sm:flex-row justify-end items-center gap-2">
-            <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Log Timesheet
-            </Button>
-        </div>
         </div>
 
         <main className="pb-4 md:pb-8 px-4 md:px-8">
         <Card className="shadow-lg w-full rounded-none md:rounded-lg"> 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 md:px-6 pt-4 md:pt-6">
-            <CardTitle className="text-xl font-medium">
-              {format(currentMonth, 'MMMM yyyy')}
-            </CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-xl font-medium">
+                {format(currentMonth, 'MMMM yyyy')}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Previous month</span>
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Next month</span>
+                </Button>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Previous month</span>
+              <Button onClick={() => exportToCSV(timesheetEntries)} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-                <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Next month</span>
+              <Button onClick={() => { setInitialModalDate(undefined); setIsModalOpen(true); }}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Log Timesheet
               </Button>
             </div>
           </CardHeader>
