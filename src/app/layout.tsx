@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(baiJamjuree.variable, "font-sans antialiased")}>
+      <body className={cn(baiJamjuree.variable, "font-sans antialiased")} suppressHydrationWarning={true}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
