@@ -1,6 +1,6 @@
 "use client";
 
-import { Github, Heart, Sheet, ExternalLink } from 'lucide-react';
+import { Github, Heart, Sheet, ExternalLink, Copy } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 export function Footer() {
@@ -20,9 +20,11 @@ export function Footer() {
                 description: "Email copied to clipboard!",
               });
             }}
-            className="text-primary hover:underline"
+            className="text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            title="Copy email address"
           >
-            vu.nam@sun-asterisk.com
+            <span>vu.nam@sun-asterisk.com</span>
+            <Copy className="h-4 w-4" />
           </button>
         </div>
         <div className="flex items-center gap-2">
